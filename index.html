@@ -118,9 +118,11 @@
             <div class="info-row"><span class="info-label">Характер</span><span class="info-value" id="petCharacter">Игривый</span></div>
             <div class="info-row"><span class="info-label">Опыт</span><span class="info-value" id="petXP">245 / 500 XP</span></div>
         </div>
+        
+        <!-- НАВИГАЦИЯ (обновлено: Комната → Прогулка) -->
         <div class="nav-bar">
             <div class="nav-item active" onclick="navigate('home')"><div class="nav-icon">🏠</div><div class="nav-label">Дом</div></div>
-            <div class="nav-item" onclick="navigate('room')"><div class="nav-icon">🎨</div><div class="nav-label">Комната</div></div>
+            <div class="nav-item" onclick="navigate('walk')"><div class="nav-icon">🌳</div><div class="nav-label">Прогулка</div></div>
             <div class="nav-item" onclick="navigate('inventory')"><div class="nav-icon">🎒</div><div class="nav-label">Вещи</div></div>
             <div class="nav-item" onclick="navigate('album')"><div class="nav-icon">📸</div><div class="nav-label">Альбом</div></div>
         </div>
@@ -143,13 +145,11 @@
             tg.expand();
             tg.ready();
             
-            // Получаем данные пользователя
             if (tg.initDataUnsafe?.user) {
                 userData = tg.initDataUnsafe.user;
                 document.getElementById('userBadge').textContent = `👤 ${userData.first_name}`;
             }
             
-            // Настраиваем MainButton
             tg.MainButton.setText('💾 СОХРАНИТЬ');
             tg.MainButton.color = '#3390ec';
             tg.MainButton.textColor = '#ffffff';
@@ -160,7 +160,6 @@
                 if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
             });
             
-            // Настраиваем BackButton
             tg.BackButton.show();
             tg.BackButton.onClick(() => {
                 saveGame();
@@ -255,6 +254,29 @@
             document.getElementById('modalOverlay').classList.remove('show');
         }
 
+        // ==================== NAVIGATION (ОБНОВЛЕНО!) ====================
+        function navigate(page) {
+            document.querySelectorAll('.nav-item').forEach(item => { item.classList.remove('active'); });
+            event.currentTarget.classList.add('active');
+            
+            const pages = {
+                home: { icon: '🏠', label: 'Дом', url: null },
+                walk: { icon: '🌳', label: 'Прогулка', url: './cat-run.html' },  // ← ОТКРЫВАЕТ МИНИ-ИГРУ!
+                inventory: { icon: '🎒', label: 'Вещи', url: null },
+                album: { icon: '📸', label: 'Альбом', url: null }
+            };
+            
+            const pageInfo = pages[page];
+            
+            // Если есть URL — открываем мини-игру
+            if (pageInfo.url) {
+                window.location.href = pageInfo.url;
+            } else {
+                // Иначе показываем "В разработке"
+                showToast(`${pageInfo.icon} ${pageInfo.label} (в разработке)`);
+            }
+        }
+
         // ==================== SAVE/LOAD ====================
         async function saveGame() {
             if (tg) {
@@ -262,7 +284,6 @@
                     const saveData = { pet: pet, timestamp: new Date().toISOString() };
                     localStorage.setItem(`tamagotchi_save_${userData.id}`, JSON.stringify(saveData));
                     showSaveStatus();
-                    console.log('✅ Сохранено в localStorage');
                 } catch (e) { console.error('❌ Ошибка сохранения:', e); }
             } else {
                 try {
@@ -282,7 +303,6 @@
                         if (saveData.pet) {
                             pet = { ...pet, ...saveData.pet };
                             showToast('Прогресс загружен! ✨');
-                            console.log('✅ Загружено из localStorage');
                         }
                     }
                 } catch (e) { console.error('❌ Ошибка загрузки localStorage:', e); }
@@ -336,7 +356,6 @@
                 return; 
             }
             
-            // Вибрация при действии
             if (tg?.HapticFeedback) {
                 tg.HapticFeedback.impactOccurred('light');
             }
@@ -357,18 +376,10 @@
                 showModal('🎉 Уровень повышен!', `Твой питомец достиг уровня ${pet.level}!`);
                 showTemporaryStatus('happy2', 'Ура! 🎉');
                 
-                // Вибрация при повышении уровня
                 if (tg?.HapticFeedback) {
                     tg.HapticFeedback.notificationOccurred('success');
                 }
             }
-        }
-
-        function navigate(page) {
-            document.querySelectorAll('.nav-item').forEach(item => { item.classList.remove('active'); });
-            event.currentTarget.classList.add('active');
-            const pages = { home: '🏠 Главная', room: '🎨 Комната (в разработке)', inventory: '🎒 Инвентарь (в разработке)', album: '📸 Альбом (в разработке)' };
-            if (page !== 'home') { showToast(pages[page]); }
         }
 
         function startDecay() {
