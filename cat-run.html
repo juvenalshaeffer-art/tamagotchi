@@ -14,6 +14,7 @@
             min-height: 100vh;
             background: linear-gradient(to bottom, #87CEEB 0%, #E0F6FF 100%);
             font-family: Arial, sans-serif;
+            overflow: hidden;
         }
         
         #gameContainer {
@@ -103,10 +104,6 @@
         const finalScoreElement = document.getElementById('finalScore');
         const restartBtn = document.getElementById('restartBtn');
 
-        // Загружаем спрайт
-        const sprite = new Image();
-        sprite.src = 'your-cat-sprite.png'; // Замените на путь к вашему спрайту
-
         // Параметры игры
         const game = {
             speed: 5,
@@ -125,9 +122,7 @@
             velocityY: 0,
             isJumping: false,
             groundY: 300,
-            spriteFrame: 0,
-            spriteRow: 0,
-            frameCounter: 0
+            legFrame: 0
         };
 
         // Препятствия
@@ -137,15 +132,6 @@
         const ground = {
             y: 340,
             height: 60
-        };
-
-        // Спрайт параметры (настройте под ваш спрайт)
-        const spriteConfig = {
-            frameWidth: 64,    // Ширина одного кадра
-            frameHeight: 64,   // Высота одного кадра
-            framesPerRow: 6,   // Количество кадров в ряду
-            totalRows: 3,      // Количество рядов
-            animationSpeed: 5  // Скорость анимации (меньше = быстрее)
         };
 
         // Класс препятствия (камень)
@@ -206,6 +192,152 @@
             }
         }
 
+        // Рисуем котика
+        function drawCat() {
+            ctx.save();
+            ctx.translate(cat.x, cat.y);
+            
+            // Тень под котиком
+            ctx.fillStyle = 'rgba(0,0,0,0.2)';
+            ctx.beginPath();
+            ctx.ellipse(30, 38, 25, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Хвост
+            ctx.strokeStyle = '#808080';
+            ctx.lineWidth = 6;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(5, 25);
+            ctx.quadraticCurveTo(-5, 15, -8, 5);
+            ctx.stroke();
+            
+            // Задние лапы (анимация бега)
+            ctx.fillStyle = '#808080';
+            if (!cat.isJumping) {
+                const legOffset = Math.sin(game.frame * 0.3) * 10;
+                // Задняя левая
+                ctx.beginPath();
+                ctx.ellipse(15 + legOffset, 35, 5, 8, 0.2, 0, Math.PI * 2);
+                ctx.fill();
+                // Задняя правая
+                ctx.beginPath();
+                ctx.ellipse(25 - legOffset, 35, 5, 8, -0.2, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                // Лапы в прыжке
+                ctx.beginPath();
+                ctx.ellipse(15, 32, 5, 6, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(25, 32, 5, 6, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Тело
+            ctx.fillStyle = '#A0A0A0';
+            ctx.beginPath();
+            ctx.ellipse(30, 25, 28, 15, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Передние лапы
+            if (!cat.isJumping) {
+                const frontLegOffset = Math.cos(game.frame * 0.3) * 10;
+                ctx.beginPath();
+                ctx.ellipse(45 + frontLegOffset, 35, 5, 8, -0.2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(52 - frontLegOffset, 35, 5, 8, 0.2, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                ctx.beginPath();
+                ctx.ellipse(48, 30, 5, 6, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(55, 30, 5, 6, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Голова
+            ctx.beginPath();
+            ctx.arc(55, 18, 14, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Уши
+            ctx.beginPath();
+            ctx.moveTo(45, 10);
+            ctx.lineTo(48, 0);
+            ctx.lineTo(52, 8);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.moveTo(58, 8);
+            ctx.lineTo(62, 0);
+            ctx.lineTo(65, 10);
+            ctx.fill();
+            
+            // Внутренняя часть ушей
+            ctx.fillStyle = '#FFB6C1';
+            ctx.beginPath();
+            ctx.moveTo(47, 8);
+            ctx.lineTo(49, 2);
+            ctx.lineTo(51, 7);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.moveTo(59, 7);
+            ctx.lineTo(61, 2);
+            ctx.lineTo(63, 8);
+            ctx.fill();
+            
+            // Глаза
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(58, 16, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(68, 16, 5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Зрачки
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(59, 16, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(69, 16, 3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Зрачки (чёрные)
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(59, 16, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(69, 16, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Нос
+            ctx.fillStyle = '#FFB6C1';
+            ctx.beginPath();
+            ctx.arc(63, 21, 2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Усы
+            ctx.strokeStyle = '#606060';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(55, 20);
+            ctx.lineTo(45, 18);
+            ctx.moveTo(55, 22);
+            ctx.lineTo(45, 22);
+            ctx.moveTo(55, 24);
+            ctx.lineTo(45, 26);
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+
         // Обновление котика
         function updateCat() {
             // Физика прыжка
@@ -216,46 +348,6 @@
                 cat.y = cat.groundY;
                 cat.isJumping = false;
                 cat.velocityY = 0;
-            }
-
-            // Анимация спрайта
-            cat.frameCounter++;
-            if (cat.frameCounter >= spriteConfig.animationSpeed) {
-                cat.frameCounter = 0;
-                cat.spriteFrame++;
-                
-                // Выбираем ряд спрайта в зависимости от состояния
-                if (cat.isJumping) {
-                    cat.spriteRow = 2; // Прыжок (третий ряд)
-                } else {
-                    cat.spriteRow = 0; // Бег (первый ряд)
-                }
-                
-                if (cat.spriteFrame >= spriteConfig.framesPerRow) {
-                    cat.spriteFrame = 0;
-                }
-            }
-        }
-
-        // Отрисовка котика
-        function drawCat() {
-            if (sprite.complete) {
-                // Рисуем кадр из спрайта
-                ctx.drawImage(
-                    sprite,
-                    cat.spriteFrame * spriteConfig.frameWidth,
-                    cat.spriteRow * spriteConfig.frameHeight,
-                    spriteConfig.frameWidth,
-                    spriteConfig.frameHeight,
-                    cat.x,
-                    cat.y,
-                    cat.width,
-                    cat.height
-                );
-            } else {
-                // Заглушка если спрайт не загрузился
-                ctx.fillStyle = '#808080';
-                ctx.fillRect(cat.x, cat.y, cat.width, cat.height);
             }
         }
 
@@ -363,16 +455,8 @@
 
         restartBtn.addEventListener('click', restart);
 
-        // Запуск игры
-        sprite.onload = () => {
-            console.log('Спрайт загружен');
-            animate();
-        };
-
-        sprite.onerror = () => {
-            console.log('Спрайт не найден, используем заглушку');
-            animate();
-        };
+        // Запускаем игру сразу
+        animate();
     </script>
 </body>
 </html>
