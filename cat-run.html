@@ -5,124 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Котик бежит</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            touch-action: none;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; }
         body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: linear-gradient(to bottom, #87CEEB 0%, #E0F6FF 100%);
-            font-family: Arial, sans-serif;
-            overflow: hidden;
-            width: 100vw;
-            height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; background: linear-gradient(to bottom, #87CEEB 0%, #90EE90 100%);
+            font-family: Arial, sans-serif; overflow: hidden; width: 100vw; height: 100vh;
         }
-        
-        #gameContainer {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            max-width: 100%;
-            max-height: 100%;
-        }
-        
-        #gameCanvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to bottom, #87CEEB 0%, #90EE90 100%);
-        }
-        
+        #gameContainer { position: relative; width: 100%; height: 100%; }
+        #gameCanvas { display: block; width: 100%; height: 100%; }
         #score {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            font-size: clamp(16px, 4vw, 24px);
-            font-weight: bold;
-            color: #333;
-            background: rgba(255,255,255,0.9);
-            padding: 8px 15px;
-            border-radius: 10px;
-            z-index: 10;
+            position: absolute; top: 10px; left: 10px; font-size: clamp(16px, 4vw, 24px);
+            font-weight: bold; color: #333; background: rgba(255,255,255,0.9);
+            padding: 8px 15px; border-radius: 10px; z-index: 10;
         }
-        
         #gameOver {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(255,255,255,0.95);
-            padding: 20px 30px;
-            border-radius: 15px;
-            text-align: center;
-            display: none;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-            z-index: 20;
-            min-width: 200px;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.95); padding: 20px 30px; border-radius: 15px;
+            text-align: center; display: none; box-shadow: 0 5px 20px rgba(0,0,0,0.3); z-index: 20;
         }
-        
-        #gameOver h2 {
-            margin: 0 0 15px 0;
-            color: #333;
-            font-size: clamp(18px, 5vw, 24px);
-        }
-        
-        #gameOver p {
-            margin: 10px 0;
-            font-size: clamp(14px, 4vw, 18px);
-        }
-        
+        #gameOver h2 { margin: 0 0 15px 0; color: #333; font-size: clamp(18px, 5vw, 24px); }
+        #gameOver p { margin: 10px 0; font-size: clamp(14px, 4vw, 18px); }
         #restartBtn {
-            margin-top: 15px;
-            padding: 12px 30px;
-            font-size: clamp(14px, 4vw, 18px);
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+            margin-top: 15px; padding: 12px 30px; font-size: clamp(14px, 4vw, 18px);
+            background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;
         }
-        
-        #restartBtn:active {
-            background: #45a049;
-            transform: scale(0.95);
-        }
-        
+        #restartBtn:active { background: #45a049; transform: scale(0.95); }
         #instructions {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(255,255,255,0.9);
-            padding: 10px 20px;
-            border-radius: 10px;
-            font-size: clamp(12px, 3.5vw, 16px);
-            text-align: center;
-            z-index: 10;
-            white-space: nowrap;
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(255,255,255,0.9); padding: 10px 20px; border-radius: 10px;
+            font-size: clamp(12px, 3.5vw, 16px); text-align: center; z-index: 10;
         }
-        
         #loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: clamp(16px, 4vw, 24px);
-            color: #333;
-            background: rgba(255,255,255,0.9);
-            padding: 20px 30px;
-            border-radius: 10px;
-            z-index: 30;
-            text-align: center;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: clamp(16px, 4vw, 24px); color: #333; background: rgba(255,255,255,0.9);
+            padding: 20px 30px; border-radius: 10px; z-index: 30; text-align: center;
         }
     </style>
 </head>
@@ -131,7 +47,7 @@
         <canvas id="gameCanvas"></canvas>
         <div id="score">Счёт: 0</div>
         <div id="instructions">Нажмите ПРОБЕЛ или коснитесь экрана для прыжка</div>
-        <div id="loading">Загрузка кадров...<br><span id="loadingProgress">0/18</span></div>
+        <div id="loading">Загрузка кадров...<br><span id="loadingProgress">0/9</span></div>
         <div id="gameOver">
             <h2>Игра окончена!</h2>
             <p>Ваш счёт: <span id="finalScore">0</span></p>
@@ -150,34 +66,31 @@
         const loadingProgress = document.getElementById('loadingProgress');
         const instructions = document.getElementById('instructions');
 
-        // Адаптивный размер canvas
         function resizeCanvas() {
             const container = document.getElementById('gameContainer');
             canvas.width = container.clientWidth;
             canvas.height = container.clientHeight;
-            
             ground.y = canvas.height - 60;
             cat.groundY = canvas.height - 100;
-            
-            if (!cat.isJumping) {
-                cat.y = cat.groundY;
-            }
+            if (!cat.isJumping) cat.y = cat.groundY;
         }
 
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
-        // Загружаем все кадры (ВСЕ В ОДНОЙ ПАПКЕ!)
+        // Загружаем ТОЛЬКО нужные кадры: 1-6 (бег) и 13-15 (прыжок)
         const frames = [];
-        const totalFrames = 18;
+        const runFrames = [1, 2, 3, 4, 5, 6];      // 6 кадров бега
+        const jumpFrames = [13, 14, 15];             // 3 кадра прыжка
+        const allFrameNumbers = [...runFrames, ...jumpFrames]; // [1,2,3,4,5,6,13,14,15]
+        const totalFrames = allFrameNumbers.length; // 9 кадров
         let loadedFrames = 0;
         let allFramesLoaded = false;
 
         function loadFrames() {
-            for (let i = 1; i <= totalFrames; i++) {
+            allFrameNumbers.forEach((num, index) => {
                 const img = new Image();
-                // Путь без папки - все файлы в одной директории
-                img.src = `cat-run-${i}.png`;
+                img.src = `cat-run-${num}.png`;
                 img.onload = () => {
                     loadedFrames++;
                     loadingProgress.textContent = `${loadedFrames}/${totalFrames}`;
@@ -196,52 +109,35 @@
                     }
                 };
                 img.onerror = () => {
-                    console.error(`Не удалось загрузить cat-run-${i}.png`);
-                    loadingProgress.textContent = `Ошибка: cat-run-${i}.png`;
+                    console.error(`Не удалось загрузить cat-run-${num}.png`);
+                    loadingProgress.textContent = `Ошибка: cat-run-${num}.png`;
                 };
                 frames.push(img);
-            }
+            });
         }
 
-        // Параметры игры
         const game = {
-            speed: 5,
-            score: 0,
-            isRunning: false,
-            frame: 0,
-            gravity: 0.8
+            speed: 5, score: 0, isRunning: false, frame: 0, gravity: 0.8
         };
 
-        // Котик
         const cat = {
-            x: 80,
-            y: 0,
-            width: 80,
-            height: 80,
-            velocityY: 0,
-            isJumping: false,
-            groundY: 0,
-            currentFrame: 0,
-            frameCounter: 0,
-            animationSpeed: 5
+            x: 80, y: 0, width: 80, height: 80, velocityY: 0,
+            isJumping: false, groundY: 0, currentFrame: 0,
+            frameCounter: 0, animationSpeed: 5
         };
 
-        // Анимация: какие кадры использовать
+        // Индексы кадров в массиве frames:
+        // 0-5: кадры бега (cat-run-1...6)
+        // 6-8: кадры прыжка (cat-run-13...15)
         const animationConfig = {
-            runStart: 0,   // cat-run-1.png (индекс 0)
-            runEnd: 9,     // cat-run-10.png (индекс 9)
-            jumpStart: 12, // cat-run-13.png (индекс 12)
-            jumpEnd: 16    // cat-run-17.png (индекс 16)
+            runStart: 0,
+            runEnd: 5,
+            jumpStart: 6,
+            jumpEnd: 8
         };
 
-        // Препятствия
         let obstacles = [];
-        
-        // Земля
-        const ground = {
-            y: 0,
-            height: 60
-        };
+        const ground = { y: 0, height: 60 };
 
         class Obstacle {
             constructor() {
@@ -251,40 +147,25 @@
                 this.y = ground.y - this.height;
                 this.markedForDeletion = false;
             }
-
             update() {
                 this.x -= game.speed;
                 if (this.x + this.width < 0) {
                     this.markedForDeletion = true;
                     game.score++;
                     scoreElement.textContent = `Счёт: ${game.score}`;
-                    if (game.score % 5 === 0) {
-                        game.speed += 0.5;
-                    }
+                    if (game.score % 5 === 0) game.speed += 0.5;
                 }
             }
-
             draw() {
                 ctx.fillStyle = '#696969';
                 ctx.beginPath();
-                ctx.ellipse(
-                    this.x + this.width/2, 
-                    this.y + this.height/2, 
-                    this.width/2, 
-                    this.height/2, 
-                    0, 0, Math.PI * 2
-                );
+                ctx.ellipse(this.x + this.width/2, this.y + this.height/2, 
+                    this.width/2, this.height/2, 0, 0, Math.PI * 2);
                 ctx.fill();
-                
                 ctx.fillStyle = '#505050';
                 ctx.beginPath();
-                ctx.ellipse(
-                    this.x + this.width/2, 
-                    this.y + this.height - 5, 
-                    this.width/2 - 5, 
-                    8, 
-                    0, 0, Math.PI * 2
-                );
+                ctx.ellipse(this.x + this.width/2, this.y + this.height - 5, 
+                    this.width/2 - 5, 8, 0, 0, Math.PI * 2);
                 ctx.fill();
             }
         }
@@ -307,7 +188,6 @@
                 cat.velocityY = 0;
             }
 
-            // Анимация кадров
             cat.frameCounter++;
             if (cat.frameCounter >= cat.animationSpeed) {
                 cat.frameCounter = 0;
@@ -315,7 +195,7 @@
                 if (cat.isJumping) {
                     cat.currentFrame++;
                     if (cat.currentFrame > animationConfig.jumpEnd) {
-                        cat.currentFrame = animationConfig.jumpStart;
+                        cat.currentFrame = animationConfig.jumpEnd; // Остаёмся на последнем кадре прыжка
                     }
                 } else {
                     cat.currentFrame++;
@@ -328,13 +208,7 @@
 
         function drawCat() {
             if (allFramesLoaded && frames[cat.currentFrame]) {
-                ctx.drawImage(
-                    frames[cat.currentFrame],
-                    cat.x,
-                    cat.y,
-                    cat.width,
-                    cat.height
-                );
+                ctx.drawImage(frames[cat.currentFrame], cat.x, cat.y, cat.width, cat.height);
             } else {
                 ctx.fillStyle = '#A0A0A0';
                 ctx.fillRect(cat.x, cat.y, cat.width, cat.height);
@@ -351,24 +225,17 @@
                 obstacleTimer = 0;
                 obstacleInterval = 60 + Math.random() * 60;
             }
-
-            obstacles.forEach(obstacle => {
-                obstacle.update();
-                obstacle.draw();
-            });
-
+            obstacles.forEach(obstacle => { obstacle.update(); obstacle.draw(); });
             obstacles = obstacles.filter(obs => !obs.markedForDeletion);
         }
 
         function checkCollisions() {
             const hitboxPadding = 15;
             for (let obstacle of obstacles) {
-                if (
-                    cat.x + hitboxPadding < obstacle.x + obstacle.width &&
+                if (cat.x + hitboxPadding < obstacle.x + obstacle.width &&
                     cat.x + cat.width - hitboxPadding > obstacle.x &&
                     cat.y + hitboxPadding < obstacle.y + obstacle.height &&
-                    cat.y + cat.height - hitboxPadding > obstacle.y
-                ) {
+                    cat.y + cat.height - hitboxPadding > obstacle.y) {
                     gameOver();
                 }
             }
@@ -377,7 +244,6 @@
         function drawGround() {
             ctx.fillStyle = '#8B4513';
             ctx.fillRect(0, ground.y, canvas.width, ground.height);
-            
             ctx.fillStyle = '#228B22';
             ctx.fillRect(0, ground.y, canvas.width, 10);
         }
@@ -389,82 +255,48 @@
         }
 
         function restart() {
-            game.speed = 5;
-            game.score = 0;
-            game.isRunning = true;
-            game.frame = 0;
-            
-            cat.y = cat.groundY;
-            cat.velocityY = 0;
-            cat.isJumping = false;
-            cat.currentFrame = 0;
-            
-            obstacles = [];
-            obstacleTimer = 0;
-            
+            game.speed = 5; game.score = 0; game.isRunning = true; game.frame = 0;
+            cat.y = cat.groundY; cat.velocityY = 0; cat.isJumping = false;
+            cat.currentFrame = 0; obstacles = []; obstacleTimer = 0;
             scoreElement.textContent = 'Счёт: 0';
             gameOverScreen.style.display = 'none';
-            
             animate();
         }
 
         function animate() {
             if (!game.isRunning) return;
-
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            drawGround();
-            updateCat();
-            drawCat();
-            handleObstacles();
-            checkCollisions();
-
+            drawGround(); updateCat(); drawCat(); handleObstacles(); checkCollisions();
             game.frame++;
             requestAnimationFrame(animate);
         }
 
-        // Управление
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 e.preventDefault();
                 if (!game.isRunning && allFramesLoaded && gameOverScreen.style.display === 'none') {
-                    game.isRunning = true;
-                    instructions.style.display = 'none';
-                    animate();
-                } else if (game.isRunning) {
-                    jump();
-                }
+                    game.isRunning = true; instructions.style.display = 'none'; animate();
+                } else if (game.isRunning) { jump(); }
             }
         });
 
         canvas.addEventListener('click', () => {
             if (!game.isRunning && allFramesLoaded && gameOverScreen.style.display === 'none') {
-                game.isRunning = true;
-                instructions.style.display = 'none';
-                animate();
-            } else if (game.isRunning) {
-                jump();
-            }
+                game.isRunning = true; instructions.style.display = 'none'; animate();
+            } else if (game.isRunning) { jump(); }
         });
 
         canvas.addEventListener('touchstart', (e) => {
             e.preventDefault();
             if (!game.isRunning && allFramesLoaded && gameOverScreen.style.display === 'none') {
-                game.isRunning = true;
-                instructions.style.display = 'none';
-                animate();
-            } else if (game.isRunning) {
-                jump();
-            }
+                game.isRunning = true; instructions.style.display = 'none'; animate();
+            } else if (game.isRunning) { jump(); }
         }, { passive: false });
 
         restartBtn.addEventListener('click', restart);
-        restartBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            restart();
-        });
+        restartBtn.addEventListener('touchstart', (e) => { e.preventDefault(); restart(); });
 
-        // Запуск загрузки кадров
+        // Запуск загрузки
         loadFrames();
     </script>
 </body>
