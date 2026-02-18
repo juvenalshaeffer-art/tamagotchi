@@ -122,6 +122,7 @@
             padding: 20px 30px;
             border-radius: 10px;
             z-index: 30;
+            text-align: center;
         }
     </style>
 </head>
@@ -130,7 +131,7 @@
         <canvas id="gameCanvas"></canvas>
         <div id="score">Счёт: 0</div>
         <div id="instructions">Нажмите ПРОБЕЛ или коснитесь экрана для прыжка</div>
-        <div id="loading">Загрузка...</div>
+        <div id="loading">Загрузка кадров...<br><span id="loadingProgress">0/18</span></div>
         <div id="gameOver">
             <h2>Игра окончена!</h2>
             <p>Ваш счёт: <span id="finalScore">0</span></p>
@@ -146,6 +147,7 @@
         const finalScoreElement = document.getElementById('finalScore');
         const restartBtn = document.getElementById('restartBtn');
         const loadingScreen = document.getElementById('loading');
+        const loadingProgress = document.getElementById('loadingProgress');
         const instructions = document.getElementById('instructions');
 
         // Адаптивный размер canvas
@@ -165,23 +167,41 @@
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
-        // Загружаем спрайт
-        const sprite = new Image();
-        sprite.src = 'cat-sprite.png';
+        // Загружаем все кадры (ВСЕ В ОДНОЙ ПАПКЕ!)
+        const frames = [];
+        const totalFrames = 18;
+        let loadedFrames = 0;
+        let allFramesLoaded = false;
 
-        let spriteLoaded = false;
-
-        sprite.onload = () => {
-            spriteLoaded = true;
-            loadingScreen.style.display = 'none';
-            setTimeout(() => {
-                instructions.style.display = 'none';
-            }, 3000);
-        };
-
-        sprite.onerror = () => {
-            loadingScreen.textContent = 'Ошибка! Не найден cat-sprite.png';
-        };
+        function loadFrames() {
+            for (let i = 1; i <= totalFrames; i++) {
+                const img = new Image();
+                // Путь без папки - все файлы в одной директории
+                img.src = `cat-run-${i}.png`;
+                img.onload = () => {
+                    loadedFrames++;
+                    loadingProgress.textContent = `${loadedFrames}/${totalFrames}`;
+                    if (loadedFrames === totalFrames) {
+                        allFramesLoaded = true;
+                        loadingScreen.style.display = 'none';
+                        setTimeout(() => {
+                            instructions.style.display = 'none';
+                        }, 2000);
+                        setTimeout(() => {
+                            if (!game.isRunning && gameOverScreen.style.display === 'none') {
+                                game.isRunning = true;
+                                animate();
+                            }
+                        }, 1000);
+                    }
+                };
+                img.onerror = () => {
+                    console.error(`Не удалось загрузить cat-run-${i}.png`);
+                    loadingProgress.textContent = `Ошибка: cat-run-${i}.png`;
+                };
+                frames.push(img);
+            }
+        }
 
         // Параметры игры
         const game = {
@@ -196,24 +216,22 @@
         const cat = {
             x: 80,
             y: 0,
-            width: 0,
-            height: 0,
+            width: 80,
+            height: 80,
             velocityY: 0,
             isJumping: false,
             groundY: 0,
-            spriteFrame: 0,
-            spriteRow: 0,
-            frameCounter: 0
+            currentFrame: 0,
+            frameCounter: 0,
+            animationSpeed: 5
         };
 
-        // НАСТРОЙКИ СПРАЙТА - измените под ваш файл!
-        const spriteConfig = {
-            frameWidth: 64,
-            frameHeight: 64,
-            framesPerRow: 6,
-            totalRows: 4,
-            animationSpeed: 4,
-            scaleFactor: 1.2
+        // Анимация: какие кадры использовать
+        const animationConfig = {
+            runStart: 0,   // cat-run-1.png (индекс 0)
+            runEnd: 9,     // cat-run-10.png (индекс 9)
+            jumpStart: 12, // cat-run-13.png (индекс 12)
+            jumpEnd: 16    // cat-run-17.png (индекс 16)
         };
 
         // Препятствия
@@ -275,6 +293,7 @@
             if (!cat.isJumping && game.isRunning) {
                 cat.velocityY = -15;
                 cat.isJumping = true;
+                cat.currentFrame = animationConfig.jumpStart;
             }
         }
 
@@ -286,44 +305,39 @@
                 cat.y = cat.groundY;
                 cat.isJumping = false;
                 cat.velocityY = 0;
-                cat.spriteRow = 0;
-            } else {
-                cat.spriteRow = 2 + Math.floor(cat.frameCounter / 5) % 2;
             }
 
+            // Анимация кадров
             cat.frameCounter++;
-            if (cat.frameCounter >= spriteConfig.animationSpeed) {
+            if (cat.frameCounter >= cat.animationSpeed) {
                 cat.frameCounter = 0;
-                cat.spriteFrame++;
                 
-                if (cat.spriteFrame >= spriteConfig.framesPerRow) {
-                    cat.spriteFrame = 0;
+                if (cat.isJumping) {
+                    cat.currentFrame++;
+                    if (cat.currentFrame > animationConfig.jumpEnd) {
+                        cat.currentFrame = animationConfig.jumpStart;
+                    }
+                } else {
+                    cat.currentFrame++;
+                    if (cat.currentFrame > animationConfig.runEnd) {
+                        cat.currentFrame = animationConfig.runStart;
+                    }
                 }
             }
         }
 
         function drawCat() {
-            if (spriteLoaded && sprite.complete) {
-                const frameWidth = spriteConfig.frameWidth * spriteConfig.scaleFactor;
-                const frameHeight = spriteConfig.frameHeight * spriteConfig.scaleFactor;
-                
-                cat.width = frameWidth;
-                cat.height = frameHeight;
-                
+            if (allFramesLoaded && frames[cat.currentFrame]) {
                 ctx.drawImage(
-                    sprite,
-                    cat.spriteFrame * spriteConfig.frameWidth,
-                    cat.spriteRow * spriteConfig.frameHeight,
-                    spriteConfig.frameWidth,
-                    spriteConfig.frameHeight,
+                    frames[cat.currentFrame],
                     cat.x,
                     cat.y,
-                    frameWidth,
-                    frameHeight
+                    cat.width,
+                    cat.height
                 );
             } else {
                 ctx.fillStyle = '#A0A0A0';
-                ctx.fillRect(cat.x, cat.y, 60, 40);
+                ctx.fillRect(cat.x, cat.y, cat.width, cat.height);
             }
         }
 
@@ -347,7 +361,7 @@
         }
 
         function checkCollisions() {
-            const hitboxPadding = 10;
+            const hitboxPadding = 15;
             for (let obstacle of obstacles) {
                 if (
                     cat.x + hitboxPadding < obstacle.x + obstacle.width &&
@@ -383,7 +397,7 @@
             cat.y = cat.groundY;
             cat.velocityY = 0;
             cat.isJumping = false;
-            cat.spriteRow = 0;
+            cat.currentFrame = 0;
             
             obstacles = [];
             obstacleTimer = 0;
@@ -409,36 +423,37 @@
             requestAnimationFrame(animate);
         }
 
+        // Управление
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 e.preventDefault();
-                if (!game.isRunning && loadingScreen.style.display === 'none' && gameOverScreen.style.display === 'none') {
+                if (!game.isRunning && allFramesLoaded && gameOverScreen.style.display === 'none') {
                     game.isRunning = true;
                     instructions.style.display = 'none';
                     animate();
-                } else {
+                } else if (game.isRunning) {
                     jump();
                 }
             }
         });
 
         canvas.addEventListener('click', () => {
-            if (!game.isRunning && loadingScreen.style.display === 'none' && gameOverScreen.style.display === 'none') {
+            if (!game.isRunning && allFramesLoaded && gameOverScreen.style.display === 'none') {
                 game.isRunning = true;
                 instructions.style.display = 'none';
                 animate();
-            } else {
+            } else if (game.isRunning) {
                 jump();
             }
         });
 
         canvas.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            if (!game.isRunning && loadingScreen.style.display === 'none' && gameOverScreen.style.display === 'none') {
+            if (!game.isRunning && allFramesLoaded && gameOverScreen.style.display === 'none') {
                 game.isRunning = true;
                 instructions.style.display = 'none';
                 animate();
-            } else {
+            } else if (game.isRunning) {
                 jump();
             }
         }, { passive: false });
@@ -449,12 +464,8 @@
             restart();
         });
 
-        setTimeout(() => {
-            if (spriteLoaded && !game.isRunning && gameOverScreen.style.display === 'none') {
-                game.isRunning = true;
-                animate();
-            }
-        }, 2000);
+        // Запуск загрузки кадров
+        loadFrames();
     </script>
 </body>
 </html>
