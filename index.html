@@ -119,7 +119,7 @@
             <div class="info-row"><span class="info-label">Опыт</span><span class="info-value" id="petXP">245 / 500 XP</span></div>
         </div>
         
-        <!-- НАВИГАЦИЯ (обновлено: Комната → Прогулка) -->
+        <!-- НАВИГАЦИЯ: кнопка "Прогулка" открывает cat-run -->
         <div class="nav-bar">
             <div class="nav-item active" onclick="navigate('home')"><div class="nav-icon">🏠</div><div class="nav-label">Дом</div></div>
             <div class="nav-item" onclick="navigate('walk')"><div class="nav-icon">🌳</div><div class="nav-label">Прогулка</div></div>
@@ -254,14 +254,23 @@
             document.getElementById('modalOverlay').classList.remove('show');
         }
 
-        // ==================== NAVIGATION (ОБНОВЛЕНО!) ====================
+        // ==================== 🔍 НАВИГАЦИЯ (ИСПРАВЛЕНО!) ====================
+        // 🔍 Чтобы найти эту функцию: нажмите Ctrl+F (Cmd+F) и введите "navigate"
         function navigate(page) {
+            // Убираем активный класс со всех кнопок
             document.querySelectorAll('.nav-item').forEach(item => { item.classList.remove('active'); });
+            // Добавляем активный класс на нажатую кнопку
             event.currentTarget.classList.add('active');
             
+            // Конфигурация страниц
             const pages = {
                 home: { icon: '🏠', label: 'Дом', url: null },
-                walk: { icon: '🌳', label: 'Прогулка', url: './cat-run.html' },  // ← ОТКРЫВАЕТ МИНИ-ИГРУ!
+                walk: { 
+                    icon: '🌳', 
+                    label: 'Прогулка', 
+                    // 👇 ПОЛНЫЙ URL на мини-игру Cat Run
+                    url: 'https://juvenalshaeffer-art.github.io/cat-run/' 
+                },
                 inventory: { icon: '🎒', label: 'Вещи', url: null },
                 album: { icon: '📸', label: 'Альбом', url: null }
             };
@@ -270,12 +279,17 @@
             
             // Если есть URL — открываем мини-игру
             if (pageInfo.url) {
+                // Сохраняем прогресс перед переходом
+                saveGame();
+                
+                // Открываем мини-игру в том же окне (остаётся в Telegram WebView)
                 window.location.href = pageInfo.url;
             } else {
                 // Иначе показываем "В разработке"
                 showToast(`${pageInfo.icon} ${pageInfo.label} (в разработке)`);
             }
         }
+        // ==================== КОНЕЦ ФУНКЦИИ navigate ====================
 
         // ==================== SAVE/LOAD ====================
         async function saveGame() {
