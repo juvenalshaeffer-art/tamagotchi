@@ -119,7 +119,7 @@
             <div class="info-row"><span class="info-label">Опыт</span><span class="info-value" id="petXP">245 / 500 XP</span></div>
         </div>
         
-        <!-- НАВИГАЦИЯ: кнопка "Прогулка" открывает cat-run -->
+        <!-- НАВИГАЦИЯ -->
         <div class="nav-bar">
             <div class="nav-item active" onclick="navigate('home')"><div class="nav-icon">🏠</div><div class="nav-label">Дом</div></div>
             <div class="nav-item" onclick="navigate('walk')"><div class="nav-icon">🌳</div><div class="nav-label">Прогулка</div></div>
@@ -150,6 +150,7 @@
                 document.getElementById('userBadge').textContent = `👤 ${userData.first_name}`;
             }
             
+            // MainButton для сохранения
             tg.MainButton.setText('💾 СОХРАНИТЬ');
             tg.MainButton.color = '#3390ec';
             tg.MainButton.textColor = '#ffffff';
@@ -160,10 +161,11 @@
                 if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
             });
             
+            // BackButton: возврат на главную страницу main-page
             tg.BackButton.show();
             tg.BackButton.onClick(() => {
                 saveGame();
-                tg.close();
+                window.location.href = 'https://juvenalshaeffer-art.github.io/main-page/';
             });
         }
 
@@ -222,7 +224,9 @@
             else { pet.status = 'normal'; status.textContent = 'Всё хорошо! 😊'; }
             
             const imgIndex = catImages[pet.status] !== undefined ? catImages[pet.status] : 6;
-            img.src = `./part_${imgIndex}.png`;
+            
+            // 👇 ПОЛНЫЙ URL к картинкам (чтобы грузились из любой папки)
+            img.src = `https://juvenalshaeffer-art.github.io/tamagotchi/part_${imgIndex}.png`;
             
             if (pet.energy > 20 && pet.status !== 'sleeping' && pet.status !== 'sleeping2' && pet.status !== 'sleeping3') { 
                 avatar.classList.add('animate'); 
@@ -254,21 +258,22 @@
             document.getElementById('modalOverlay').classList.remove('show');
         }
 
-        // ==================== 🔍 НАВИГАЦИЯ (ИСПРАВЛЕНО!) ====================
-        // 🔍 Чтобы найти эту функцию: нажмите Ctrl+F (Cmd+F) и введите "navigate"
+        // ==================== 🔍 НАВИГАЦИЯ ====================
         function navigate(page) {
-            // Убираем активный класс со всех кнопок
             document.querySelectorAll('.nav-item').forEach(item => { item.classList.remove('active'); });
-            // Добавляем активный класс на нажатую кнопку
             event.currentTarget.classList.add('active');
             
-            // Конфигурация страниц
             const pages = {
-                home: { icon: '🏠', label: 'Дом', url: null },
+                home: { 
+                    icon: '🏠', 
+                    label: 'Дом', 
+                    // 👇 Ссылка на главную хаб-страницу
+                    url: 'https://juvenalshaeffer-art.github.io/main-page/' 
+                },
                 walk: { 
                     icon: '🌳', 
                     label: 'Прогулка', 
-                    // 👇 ПОЛНЫЙ URL на мини-игру Cat Run
+                    // 👇 Ссылка на мини-игру Cat Run
                     url: 'https://juvenalshaeffer-art.github.io/cat-run/' 
                 },
                 inventory: { icon: '🎒', label: 'Вещи', url: null },
@@ -277,61 +282,34 @@
             
             const pageInfo = pages[page];
             
-            // Если есть URL — открываем мини-игру
             if (pageInfo.url) {
-                // Сохраняем прогресс перед переходом
-                saveGame();
-                
-                // Открываем мини-игру в том же окне (остаётся в Telegram WebView)
+                saveGame(); // Сохраняем перед переходом
                 window.location.href = pageInfo.url;
             } else {
-                // Иначе показываем "В разработке"
                 showToast(`${pageInfo.icon} ${pageInfo.label} (в разработке)`);
             }
         }
-        // ==================== КОНЕЦ ФУНКЦИИ navigate ====================
 
         // ==================== SAVE/LOAD ====================
         async function saveGame() {
-            if (tg) {
-                try {
-                    const saveData = { pet: pet, timestamp: new Date().toISOString() };
-                    localStorage.setItem(`tamagotchi_save_${userData.id}`, JSON.stringify(saveData));
-                    showSaveStatus();
-                } catch (e) { console.error('❌ Ошибка сохранения:', e); }
-            } else {
-                try {
-                    const saveData = { pet: pet, timestamp: new Date().toISOString() };
-                    localStorage.setItem('tamagotchi_save', JSON.stringify(saveData));
-                    showSaveStatus();
-                } catch (e) { console.error('❌ Ошибка localStorage:', e); }
-            }
+            try {
+                const saveData = { pet: pet, timestamp: new Date().toISOString() };
+                localStorage.setItem(`tamagotchi_save_${userData.id}`, JSON.stringify(saveData));
+                showSaveStatus();
+            } catch (e) { console.error('❌ Ошибка сохранения:', e); }
         }
 
         async function loadGame() {
-            if (tg) {
-                try {
-                    const saved = localStorage.getItem(`tamagotchi_save_${userData.id}`);
-                    if (saved) {
-                        const saveData = JSON.parse(saved);
-                        if (saveData.pet) {
-                            pet = { ...pet, ...saveData.pet };
-                            showToast('Прогресс загружен! ✨');
-                        }
+            try {
+                const saved = localStorage.getItem(`tamagotchi_save_${userData.id}`);
+                if (saved) {
+                    const saveData = JSON.parse(saved);
+                    if (saveData.pet) {
+                        pet = { ...pet, ...saveData.pet };
+                        showToast('Прогресс загружен! ✨');
                     }
-                } catch (e) { console.error('❌ Ошибка загрузки localStorage:', e); }
-            } else {
-                try {
-                    const saved = localStorage.getItem('tamagotchi_save');
-                    if (saved) {
-                        const saveData = JSON.parse(saved);
-                        if (saveData.pet) {
-                            pet = { ...pet, ...saveData.pet };
-                            showToast('Прогресс загружен! ✨');
-                        }
-                    }
-                } catch (e) { console.error('❌ Ошибка загрузки localStorage:', e); }
-            }
+                }
+            } catch (e) { console.error('❌ Ошибка загрузки:', e); }
         }
 
         function saveGameOnExit() { saveGame(); }
@@ -353,7 +331,10 @@
         function showTemporaryStatus(status, message) {
             const img = document.getElementById('petImage');
             const imgIndex = catImages[status] !== undefined ? catImages[status] : 6;
-            img.src = `./part_${imgIndex}.png`;
+            
+            // 👇 Тот же полный URL для временных состояний
+            img.src = `https://juvenalshaeffer-art.github.io/tamagotchi/part_${imgIndex}.png`;
+            
             if (temporaryStatusTimeout) clearTimeout(temporaryStatusTimeout);
             temporaryStatusTimeout = setTimeout(() => { updatePetAppearance(); saveGame(); }, 2000);
         }
@@ -370,6 +351,7 @@
                 return; 
             }
             
+            // Вибрация при действии
             if (tg?.HapticFeedback) {
                 tg.HapticFeedback.impactOccurred('light');
             }
