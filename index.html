@@ -183,7 +183,7 @@
             else { pet.status = 'normal'; status.textContent = 'Всё хорошо! 😊'; }
             
             const imgIndex = catImages[pet.status] !== undefined ? catImages[pet.status] : 5;
-            img.src = `output_parts/part_${imgIndex}.png`;
+            img.src = `./part_${imgIndex}.png`;
             
             if (pet.energy > 20 && pet.status !== 'sleeping') { 
                 avatar.classList.add('animate'); 
