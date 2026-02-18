@@ -154,7 +154,6 @@
             canvas.width = container.clientWidth;
             canvas.height = container.clientHeight;
             
-            // Обновляем позицию земли относительно высоты экрана
             ground.y = canvas.height - 60;
             cat.groundY = canvas.height - 100;
             
@@ -168,13 +167,11 @@
 
         // Загружаем спрайт
         const sprite = new Image();
-        // ЗАМЕНИТЕ на путь к вашему спрайту
         sprite.src = 'cat-sprite.png';
 
         let spriteLoaded = false;
 
         sprite.onload = () => {
-            console.log('Спрайт загружен');
             spriteLoaded = true;
             loadingScreen.style.display = 'none';
             setTimeout(() => {
@@ -183,11 +180,7 @@
         };
 
         sprite.onerror = () => {
-            console.error('Не удалось загрузить спрайт! Проверьте путь к файлу.');
-            loadingScreen.textContent = 'Ошибка загрузки спрайта!';
-            setTimeout(() => {
-                loadingScreen.style.display = 'none';
-            }, 2000);
+            loadingScreen.textContent = 'Ошибка! Не найден cat-sprite.png';
         };
 
         // Параметры игры
@@ -202,25 +195,25 @@
         // Котик
         const cat = {
             x: 80,
-            y: 0, // будет установлено в resizeCanvas
-            width: 0, // будет рассчитано
-            height: 0, // будет рассчитано
+            y: 0,
+            width: 0,
+            height: 0,
             velocityY: 0,
             isJumping: false,
-            groundY: 0, // будет установлено в resizeCanvas
+            groundY: 0,
             spriteFrame: 0,
             spriteRow: 0,
             frameCounter: 0
         };
 
-        // Параметры спрайта (настройте под ваш спрайт!)
+        // НАСТРОЙКИ СПРАЙТА - измените под ваш файл!
         const spriteConfig = {
-            frameWidth: 64,      // Ширина одного кадра в пикселях
-            frameHeight: 64,     // Высота одного кадра
-            framesPerRow: 6,     // Количество кадров в ряду
-            totalRows: 3,        // Количество рядов
-            animationSpeed: 4,   // Скорость анимации (меньше = быстрее)
-            scaleFactor: 1.2     // Масштаб котика
+            frameWidth: 64,
+            frameHeight: 64,
+            framesPerRow: 6,
+            totalRows: 4,
+            animationSpeed: 4,
+            scaleFactor: 1.2
         };
 
         // Препятствия
@@ -228,11 +221,10 @@
         
         // Земля
         const ground = {
-            y: 0, // будет установлено в resizeCanvas
+            y: 0,
             height: 60
         };
 
-        // Класс препятствия (камень)
         class Obstacle {
             constructor() {
                 this.width = 30 + Math.random() * 20;
@@ -283,7 +275,6 @@
             if (!cat.isJumping && game.isRunning) {
                 cat.velocityY = -15;
                 cat.isJumping = true;
-                cat.spriteRow = 2; // Ряд с анимацией прыжка
             }
         }
 
@@ -295,10 +286,11 @@
                 cat.y = cat.groundY;
                 cat.isJumping = false;
                 cat.velocityY = 0;
-                cat.spriteRow = 0; // Ряд с анимацией бега
+                cat.spriteRow = 0;
+            } else {
+                cat.spriteRow = 2 + Math.floor(cat.frameCounter / 5) % 2;
             }
 
-            // Анимация спрайта
             cat.frameCounter++;
             if (cat.frameCounter >= spriteConfig.animationSpeed) {
                 cat.frameCounter = 0;
@@ -330,7 +322,6 @@
                     frameHeight
                 );
             } else {
-                // Заглушка пока спрайт не загрузился
                 ctx.fillStyle = '#A0A0A0';
                 ctx.fillRect(cat.x, cat.y, 60, 40);
             }
@@ -418,7 +409,6 @@
             requestAnimationFrame(animate);
         }
 
-        // Управление
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 e.preventDefault();
@@ -459,19 +449,6 @@
             restart();
         });
 
-        // Старт игры после загрузки спрайта
-        sprite.onload = () => {
-            spriteLoaded = true;
-            loadingScreen.style.display = 'none';
-            // Показываем инструкцию 3 секунды
-            setTimeout(() => {
-                if (game.isRunning) {
-                    instructions.style.display = 'none';
-                }
-            }, 3000);
-        };
-
-        // Автозапуск через 2 секунды после загрузки страницы
         setTimeout(() => {
             if (spriteLoaded && !game.isRunning && gameOverScreen.style.display === 'none') {
                 game.isRunning = true;
