@@ -143,11 +143,24 @@
             character: 'Игривый', status: 'happy', lastUpdate: Date.now()
         };
 
+        // НОВАЯ КАРТА СОСТОЯНИЙ (0-15)
         const catImages = {
-            happy: 0, happy2: 1, sleeping: 2, angry: 3,
-            wink: 4, normal: 5, music: 6, normal2: 7,
-            dizzy: 8, sad: 9, sweat: 10, sick: 11,
-            normal3: 12, singing: 13, sleeping2: 14, confused: 15
+            music: 0,           // 1,1 - музыка
+            play: 1,            // 1,2 - играет с рыбкой
+            play2: 2,           // 1,3 - играет с клубком
+            singing: 3,         // 1,4 - поёт/смеётся
+            sleeping: 4,        // 2,1 - спит в кровати
+            sleeping2: 5,       // 2,2 - спит сидя
+            normal: 6,          // 2,3 - читает книгу
+            wink: 7,            // 2,4 - подмигивает
+            normal2: 8,         // 3,1 - геймер
+            happy2: 9,          // 3,2 - с короной
+            normal3: 10,        // 3,3 - в коробке
+            feed: 11,           // 3,4 - ест мороженое
+            music2: 12,         // 4,1 - в наушниках
+            normal4: 13,        // 4,2 - стесняется
+            sleeping3: 14,      // 4,3 - спит на подушке
+            happy3: 15          // 4,4 - с фотоаппаратом
         };
 
         function updateUI() {
@@ -172,17 +185,36 @@
             const avatar = document.getElementById('petAvatar');
             const status = document.getElementById('petStatus');
             
-            if (pet.hunger < 30) { pet.status = 'sad'; status.textContent = 'Хочет есть... 🍖'; }
-            else if (pet.energy < 20) { pet.status = 'sleeping'; status.textContent = 'Устал, хочет спать... 😴'; }
-            else if (pet.mood < 40) { pet.status = 'sad'; status.textContent = 'Грустит... 💔'; }
-            else if (pet.hygiene < 30) { pet.status = 'sweat'; status.textContent = 'Нужно помыться! 🛁'; }
-            else if (pet.mood > 80 && pet.hunger > 60 && pet.energy > 60) { pet.status = Math.random() > 0.5 ? 'happy' : 'happy2'; status.textContent = 'Счастлив и доволен! 😊'; }
-            else { pet.status = 'normal'; status.textContent = 'Всё хорошо! 😊'; }
+            // Определяем состояние питомца
+            if (pet.hunger < 30) { 
+                pet.status = 'normal4'; 
+                status.textContent = 'Хочет есть... 🍖'; 
+            }
+            else if (pet.energy < 20) { 
+                pet.status = 'sleeping2'; 
+                status.textContent = 'Устал, хочет спать... 😴'; 
+            }
+            else if (pet.mood < 40) { 
+                pet.status = 'normal4'; 
+                status.textContent = 'Грустит... 💔'; 
+            }
+            else if (pet.hygiene < 30) { 
+                pet.status = 'normal4'; 
+                status.textContent = 'Нужно помыться! 🛁'; 
+            }
+            else if (pet.mood > 80 && pet.hunger > 60 && pet.energy > 60) { 
+                pet.status = Math.random() > 0.5 ? 'happy2' : 'happy3'; 
+                status.textContent = 'Счастлив и доволен! 😊'; 
+            }
+            else { 
+                pet.status = 'normal'; 
+                status.textContent = 'Всё хорошо! 😊'; 
+            }
             
-            const imgIndex = catImages[pet.status] !== undefined ? catImages[pet.status] : 5;
+            const imgIndex = catImages[pet.status] !== undefined ? catImages[pet.status] : 6;
             img.src = `./part_${imgIndex}.png`;
             
-            if (pet.energy > 20 && pet.status !== 'sleeping') { 
+            if (pet.energy > 20 && pet.status !== 'sleeping' && pet.status !== 'sleeping2' && pet.status !== 'sleeping3') { 
                 avatar.classList.add('animate'); 
             } else { 
                 avatar.classList.remove('animate'); 
@@ -254,12 +286,69 @@
         setInterval(() => { saveGame(); }, 15000);
 
         const actions = {
-            feed: { cooldown: 30000, effect: () => { pet.hunger = Math.min(100, pet.hunger + 20); pet.mood = Math.min(100, pet.mood + 5); pet.xp += 10; showTemporaryStatus('happy2', 'Вкусно! 😋'); return 'Вкусно! 😋'; } },
-            toilet: { cooldown: 60000, effect: () => { pet.hygiene = Math.min(100, pet.hygiene + 30); pet.mood = Math.min(100, pet.mood + 10); pet.xp += 5; showTemporaryStatus('wink', 'Чисто и свежо! ✨'); return 'Чисто и свежо! ✨'; } },
-            walk: { cooldown: 120000, effect: () => { pet.energy = Math.max(0, pet.energy - 15); pet.mood = Math.min(100, pet.mood + 25); pet.hunger = Math.max(0, pet.hunger - 10); pet.xp += 20; showTemporaryStatus('music', 'Отличная прогулка! 🌳'); return 'Отличная прогулка! 🌳'; } },
-            sleep: { cooldown: 300000, effect: () => { pet.energy = Math.min(100, pet.energy + 40); pet.hunger = Math.max(0, pet.hunger - 5); pet.xp += 15; showTemporaryStatus('sleeping2', 'Выспался! 😴'); return 'Выспался! 😴'; } },
-            heal: { cooldown: 600000, effect: () => { pet.hunger = Math.min(100, pet.hunger + 10); pet.energy = Math.min(100, pet.energy + 10); pet.mood = Math.min(100, pet.mood + 15); pet.xp += 25; showTemporaryStatus('happy', 'Здоровье улучшилось! 💪'); return 'Здоровье улучшилось! 💪'; } },
-            play: { cooldown: 60000, effect: () => { pet.energy = Math.max(0, pet.energy - 10); pet.mood = Math.min(100, pet.mood + 20); pet.hunger = Math.max(0, pet.hunger - 5); pet.xp += 15; showTemporaryStatus('singing', 'Весело! 🎉'); return 'Весело! 🎉'; } }
+            feed: { 
+                cooldown: 30000, 
+                effect: () => { 
+                    pet.hunger = Math.min(100, pet.hunger + 20); 
+                    pet.mood = Math.min(100, pet.mood + 5); 
+                    pet.xp += 10; 
+                    showTemporaryStatus('feed', 'Вкусно! 😋'); 
+                    return 'Вкусно! 😋'; 
+                } 
+            },
+            toilet: { 
+                cooldown: 60000, 
+                effect: () => { 
+                    pet.hygiene = Math.min(100, pet.hygiene + 30); 
+                    pet.mood = Math.min(100, pet.mood + 10); 
+                    pet.xp += 5; 
+                    showTemporaryStatus('wink', 'Чисто и свежо! ✨'); 
+                    return 'Чисто и свежо! ✨'; 
+                } 
+            },
+            walk: { 
+                cooldown: 120000, 
+                effect: () => { 
+                    pet.energy = Math.max(0, pet.energy - 15); 
+                    pet.mood = Math.min(100, pet.mood + 25); 
+                    pet.hunger = Math.max(0, pet.hunger - 10); 
+                    pet.xp += 20; 
+                    showTemporaryStatus('music', 'Отличная прогулка! 🌳'); 
+                    return 'Отличная прогулка! 🌳'; 
+                } 
+            },
+            sleep: { 
+                cooldown: 300000, 
+                effect: () => { 
+                    pet.energy = Math.min(100, pet.energy + 40); 
+                    pet.hunger = Math.max(0, pet.hunger - 5); 
+                    pet.xp += 15; 
+                    showTemporaryStatus('sleeping', 'Выспался! 😴'); 
+                    return 'Выспался! 😴'; 
+                } 
+            },
+            heal: { 
+                cooldown: 600000, 
+                effect: () => { 
+                    pet.hunger = Math.min(100, pet.hunger + 10); 
+                    pet.energy = Math.min(100, pet.energy + 10); 
+                    pet.mood = Math.min(100, pet.mood + 15); 
+                    pet.xp += 25; 
+                    showTemporaryStatus('happy2', 'Здоровье улучшилось! 💪'); 
+                    return 'Здоровье улучшилось! 💪'; 
+                } 
+            },
+            play: { 
+                cooldown: 60000, 
+                effect: () => { 
+                    pet.energy = Math.max(0, pet.energy - 10); 
+                    pet.mood = Math.min(100, pet.mood + 20); 
+                    pet.hunger = Math.max(0, pet.hunger - 5); 
+                    pet.xp += 15; 
+                    showTemporaryStatus('play', 'Весело! 🎉'); 
+                    return 'Весело! 🎉'; 
+                } 
+            }
         };
 
         const cooldowns = {};
@@ -267,7 +356,7 @@
 
         function showTemporaryStatus(status, message) {
             const img = document.getElementById('petImage');
-            const imgIndex = catImages[status] !== undefined ? catImages[status] : 5;
+            const imgIndex = catImages[status] !== undefined ? catImages[status] : 6;
             img.src = `./part_${imgIndex}.png`;
             if (temporaryStatusTimeout) clearTimeout(temporaryStatusTimeout);
             temporaryStatusTimeout = setTimeout(() => { updatePetAppearance(); saveGame(); }, 2000);
@@ -298,7 +387,7 @@
                 pet.xp = 0;
                 pet.xpMax = Math.floor(pet.xpMax * 1.5);
                 showModal('🎉 Уровень повышен!', `Твой питомец достиг уровня ${pet.level}!`);
-                showTemporaryStatus('singing', 'Ура! 🎉');
+                showTemporaryStatus('happy2', 'Ура! 🎉');
             }
         }
 
