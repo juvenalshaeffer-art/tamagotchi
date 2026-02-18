@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Котик бежит</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(to bottom, #87CEEB 0%, #E0F6FF 100%);
+            font-family: Arial, sans-serif;
+        }
+        
+        #gameContainer {
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        #gameCanvas {
+            border: 3px solid #333;
+            background: linear-gradient(to bottom, #87CEEB 0%, #90EE90 100%);
+            display: block;
+        }
+        
+        #score {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            background: rgba(255,255,255,0.8);
+            padding: 5px 15px;
+            border-radius: 10px;
+        }
+        
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.95);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            display: none;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+        
+        #gameOver h2 {
+            margin: 0 0 15px 0;
+            color: #333;
+        }
+        
+        #restartBtn {
+            padding: 10px 30px;
+            font-size: 18px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        #restartBtn:hover {
+            background: #45a049;
+        }
+        
+        #instructions {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255,255,255,0.8);
+            padding: 5px 15px;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="400"></canvas>
+        <div id="score">Счёт: 0</div>
+        <div id="instructions">Нажмите ПРОБЕЛ или кликните для прыжка</div>
+        <div id="gameOver">
+            <h2>Игра окончена!</h2>
+            <p>Ваш счёт: <span id="finalScore">0</span></p>
+            <button id="restartBtn">Играть снова</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const gameOverScreen = document.getElementById('gameOver');
+        const finalScoreElement = document.getElementById('finalScore');
+        const restartBtn = document.getElementById('restartBtn');
+
+        // Загружаем спрайт
+        const sprite = new Image();
+        sprite.src = 'your-cat-sprite.png'; // Замените на путь к вашему спрайту
+
+        // Параметры игры
+        const game = {
+            speed: 5,
+            score: 0,
+            isRunning: true,
+            frame: 0,
+            gravity: 0.6
+        };
+
+        // Котик
+        const cat = {
+            x: 100,
+            y: 300,
+            width: 60,
+            height: 40,
+            velocityY: 0,
+            isJumping: false,
+            groundY: 300,
+            spriteFrame: 0,
+            spriteRow: 0,
+            frameCounter: 0
+        };
+
+        // Препятствия
+        let obstacles = [];
+        
+        // Земля
+        const ground = {
+            y: 340,
+            height: 60
+        };
+
+        // Спрайт параметры (настройте под ваш спрайт)
+        const spriteConfig = {
+            frameWidth: 64,    // Ширина одного кадра
+            frameHeight: 64,   // Высота одного кадра
+            framesPerRow: 6,   // Количество кадров в ряду
+            totalRows: 3,      // Количество рядов
+            animationSpeed: 5  // Скорость анимации (меньше = быстрее)
+        };
+
+        // Класс препятствия (камень)
+        class Obstacle {
+            constructor() {
+                this.width = 30 + Math.random() * 20;
+                this.height = 30 + Math.random() * 30;
+                this.x = canvas.width;
+                this.y = ground.y - this.height;
+                this.markedForDeletion = false;
+            }
+
+            update() {
+                this.x -= game.speed;
+                if (this.x + this.width < 0) {
+                    this.markedForDeletion = true;
+                    game.score++;
+                    scoreElement.textContent = `Счёт: ${game.score}`;
+                    // Увеличиваем скорость каждые 5 очков
+                    if (game.score % 5 === 0) {
+                        game.speed += 0.5;
+                    }
+                }
+            }
+
+            draw() {
+                // Рисуем камень
+                ctx.fillStyle = '#696969';
+                ctx.beginPath();
+                ctx.ellipse(
+                    this.x + this.width/2, 
+                    this.y + this.height/2, 
+                    this.width/2, 
+                    this.height/2, 
+                    0, 0, Math.PI * 2
+                );
+                ctx.fill();
+                
+                // Тень
+                ctx.fillStyle = '#505050';
+                ctx.beginPath();
+                ctx.ellipse(
+                    this.x + this.width/2, 
+                    this.y + this.height - 5, 
+                    this.width/2 - 5, 
+                    8, 
+                    0, 0, Math.PI * 2
+                );
+                ctx.fill();
+            }
+        }
+
+        // Прыжок
+        function jump() {
+            if (!cat.isJumping && game.isRunning) {
+                cat.velocityY = -12;
+                cat.isJumping = true;
+            }
+        }
+
+        // Обновление котика
+        function updateCat() {
+            // Физика прыжка
+            cat.velocityY += game.gravity;
+            cat.y += cat.velocityY;
+
+            if (cat.y >= cat.groundY) {
+                cat.y = cat.groundY;
+                cat.isJumping = false;
+                cat.velocityY = 0;
+            }
+
+            // Анимация спрайта
+            cat.frameCounter++;
+            if (cat.frameCounter >= spriteConfig.animationSpeed) {
+                cat.frameCounter = 0;
+                cat.spriteFrame++;
+                
+                // Выбираем ряд спрайта в зависимости от состояния
+                if (cat.isJumping) {
+                    cat.spriteRow = 2; // Прыжок (третий ряд)
+                } else {
+                    cat.spriteRow = 0; // Бег (первый ряд)
+                }
+                
+                if (cat.spriteFrame >= spriteConfig.framesPerRow) {
+                    cat.spriteFrame = 0;
+                }
+            }
+        }
+
+        // Отрисовка котика
+        function drawCat() {
+            if (sprite.complete) {
+                // Рисуем кадр из спрайта
+                ctx.drawImage(
+                    sprite,
+                    cat.spriteFrame * spriteConfig.frameWidth,
+                    cat.spriteRow * spriteConfig.frameHeight,
+                    spriteConfig.frameWidth,
+                    spriteConfig.frameHeight,
+                    cat.x,
+                    cat.y,
+                    cat.width,
+                    cat.height
+                );
+            } else {
+                // Заглушка если спрайт не загрузился
+                ctx.fillStyle = '#808080';
+                ctx.fillRect(cat.x, cat.y, cat.width, cat.height);
+            }
+        }
+
+        // Спавн препятствий
+        let obstacleTimer = 0;
+        let obstacleInterval = 100;
+
+        function handleObstacles() {
+            obstacleTimer++;
+            if (obstacleTimer > obstacleInterval) {
+                obstacles.push(new Obstacle());
+                obstacleTimer = 0;
+                // Случайный интервал между препятствиями
+                obstacleInterval = 60 + Math.random() * 60;
+            }
+
+            obstacles.forEach(obstacle => {
+                obstacle.update();
+                obstacle.draw();
+            });
+
+            obstacles = obstacles.filter(obs => !obs.markedForDeletion);
+        }
+
+        // Проверка столкновений
+        function checkCollisions() {
+            for (let obstacle of obstacles) {
+                if (
+                    cat.x < obstacle.x + obstacle.width &&
+                    cat.x + cat.width > obstacle.x &&
+                    cat.y < obstacle.y + obstacle.height &&
+                    cat.y + cat.height > obstacle.y
+                ) {
+                    gameOver();
+                }
+            }
+        }
+
+        // Рисуем землю
+        function drawGround() {
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(0, ground.y, canvas.width, ground.height);
+            
+            // Трава
+            ctx.fillStyle = '#228B22';
+            ctx.fillRect(0, ground.y, canvas.width, 10);
+        }
+
+        // Конец игры
+        function gameOver() {
+            game.isRunning = false;
+            finalScoreElement.textContent = game.score;
+            gameOverScreen.style.display = 'block';
+        }
+
+        // Перезапуск
+        function restart() {
+            game.speed = 5;
+            game.score = 0;
+            game.isRunning = true;
+            game.frame = 0;
+            
+            cat.y = cat.groundY;
+            cat.velocityY = 0;
+            cat.isJumping = false;
+            
+            obstacles = [];
+            obstacleTimer = 0;
+            
+            scoreElement.textContent = 'Счёт: 0';
+            gameOverScreen.style.display = 'none';
+            
+            animate();
+        }
+
+        // Игровой цикл
+        function animate() {
+            if (!game.isRunning) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawGround();
+            updateCat();
+            drawCat();
+            handleObstacles();
+            checkCollisions();
+
+            game.frame++;
+            requestAnimationFrame(animate);
+        }
+
+        // Управление
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                jump();
+            }
+        });
+
+        canvas.addEventListener('click', jump);
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            jump();
+        });
+
+        restartBtn.addEventListener('click', restart);
+
+        // Запуск игры
+        sprite.onload = () => {
+            console.log('Спрайт загружен');
+            animate();
+        };
+
+        sprite.onerror = () => {
+            console.log('Спрайт не найден, используем заглушку');
+            animate();
+        };
+    </script>
+</body>
+</html>
