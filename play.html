@@ -2,9 +2,65 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>💚 Лечение - Тамагочи</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🎮 Игра - Тамагочи</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Дополнительные стили для кнопок управления */
+        .controls {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 25px;
+            z-index: 50;
+        }
+        
+        .ctrl-btn {
+            width: 85px;
+            height: 85px;
+            border-radius: 50%;
+            border: 4px solid #fff;
+            color: #fff;
+            font-size: 32px;
+            font-family: 'Press Start 2P', cursive;
+            cursor: pointer;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            -webkit-user-select: none;
+            font-weight: bold;
+        }
+        
+        .ctrl-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 rgba(0,0,0,0.3);
+        }
+        
+        .btn-a {
+            background: linear-gradient(180deg, #4ECDC4 0%, #2AB7A9 100%);
+        }
+        
+        .btn-b {
+            background: linear-gradient(180deg, #FF6B6B 0%, #E65555 100%);
+        }
+        
+        .btn-label {
+            font-size: 10px;
+            margin-top: 3px;
+            opacity: 0.9;
+        }
+        
+        /* Для мобильных */
+        * {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+    </style>
 </head>
 <body>
     <div class="tamagotchi">
@@ -12,7 +68,20 @@
             <canvas id="gameCanvas"></canvas>
             <div class="scanlines"></div>
         </div>
-        <div class="instructions" id="instructions">КЛИКАЙ НА КРАСНЫЕ КРУГИ!</div>
+        
+        <!-- 🎮 Кнопки управления для мобильных -->
+        <div class="controls">
+            <button class="ctrl-btn btn-a" id="btnLeft">
+                <span>⬅️</span>
+                <span class="btn-label">ВЛЕВО</span>
+            </button>
+            <button class="ctrl-btn btn-b" id="btnRight">
+                <span>➡️</span>
+                <span class="btn-label">ВПРАВО</span>
+            </button>
+        </div>
+        
+        <div class="instructions" id="instructions">ОТБИВАЙ МЯЧ! КНОПКИ А и Б</div>
         <a href="index.html" class="back-btn">⬅ НАЗАД</a>
     </div>
 
@@ -23,83 +92,342 @@
         canvas.width = canvas.offsetWidth;
         canvas.height = canvas.offsetHeight;
         
-        let healTargets = [];
+        // 🏓 ПАРАМЕТРЫ ИГРЫ
+        const catPaddle = {
+            x: canvas.width / 2 - 35,
+            y: canvas.height - 80,
+            width: 70,
+            height: 50,
+            speed: 12  // ⚡ В 3 раза быстрее кормления (было 4)
+        };
+        
+        const handPaddle = {
+            x: canvas.width / 2 - 35,
+            y: 30,
+            width: 70,
+            height: 50
+        };
+        
+        const ball = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            dx: 0,
+            dy: 4,
+            size: 12
+        };
+        
         let score = 0;
+        let frame = 0;
+        let catDirection = 1; // 1 = вправо, -1 = влево
+        let isMovingLeft = false;
+        let isMovingRight = false;
         
         document.getElementById('instructions').style.display = 'block';
         setTimeout(() => {
             document.getElementById('instructions').style.display = 'none';
         }, 4000);
         
-        for (let i = 0; i < 5; i++) {
-            healTargets.push({
-                x: 150 + Math.random() * 200,
-                y: 100 + Math.random() * 200,
-                size: 25 + Math.random() * 15,
-                healed: false
-            });
-        }
+        // 🎮 Управление кнопками
+        const btnLeft = document.getElementById('btnLeft');
+        const btnRight = document.getElementById('btnRight');
         
-        canvas.addEventListener('click', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            
-            healTargets.forEach(target => {
-                if (!target.healed) {
-                    const dist = Math.sqrt((x - target.x) ** 2 + (y - target.y) ** 2);
-                    if (dist < target.size + 10) {
-                        target.healed = true;
-                        score++;
-                        if (score >= 5) {
-                            catState.health = Math.min(100, catState.health + 30);
-                            saveState();
-                            window.location.href = 'index.html';
-                        }
-                    }
-                }
-            });
+        function startMoveLeft() { isMovingLeft = true; catDirection = -1; }
+        function stopMoveLeft() { isMovingLeft = false; }
+        function startMoveRight() { isMovingRight = true; catDirection = 1; }
+        function stopMoveRight() { isMovingRight = false; }
+        
+        // Мышь
+        btnLeft.addEventListener('mousedown', (e) => { e.preventDefault(); startMoveLeft(); });
+        btnLeft.addEventListener('mouseup', (e) => { e.preventDefault(); stopMoveLeft(); });
+        btnLeft.addEventListener('mouseleave', (e) => { e.preventDefault(); stopMoveLeft(); });
+        
+        btnRight.addEventListener('mousedown', (e) => { e.preventDefault(); startMoveRight(); });
+        btnRight.addEventListener('mouseup', (e) => { e.preventDefault(); stopMoveRight(); });
+        btnRight.addEventListener('mouseleave', (e) => { e.preventDefault(); stopMoveRight(); });
+        
+        // Тач (мобильные)
+        btnLeft.addEventListener('touchstart', (e) => { e.preventDefault(); startMoveLeft(); });
+        btnLeft.addEventListener('touchend', (e) => { e.preventDefault(); stopMoveLeft(); });
+        
+        btnRight.addEventListener('touchstart', (e) => { e.preventDefault(); startMoveRight(); });
+        btnRight.addEventListener('touchend', (e) => { e.preventDefault(); stopMoveRight(); });
+        
+        // Клавиатура
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A' || e.key === 'ф') {
+                startMoveLeft();
+            }
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D' || e.key === 'в') {
+                startMoveRight();
+            }
         });
         
-        function drawCat(x, y) {
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A' || e.key === 'ф') {
+                stopMoveLeft();
+            }
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D' || e.key === 'в') {
+                stopMoveRight();
+            }
+        });
+        
+        // 🐱 КОТИК-РАКЕТКА (с поворотом)
+        function drawCatPaddle(x, y, direction) {
             ctx.save();
             ctx.translate(x, y);
+            
+            // Поворот котика
+            if (direction === -1) {
+                ctx.scale(-1, 1);
+                ctx.translate(-70, 0);
+            }
+            
+            // Хвост
+            const tailWag = Math.sin(frame * 0.3) * 5;
+            ctx.fillStyle = '#A0A0A0';
+            ctx.fillRect(-15, 20 + tailWag, 20, 8);
+            ctx.fillRect(-25, 15 + tailWag, 12, 8);
+            
+            // Тело
             ctx.fillStyle = '#C0C0C0';
-            ctx.fillRect(0, 20, 50, 30);
-            ctx.fillRect(40, 5, 32, 26);
+            ctx.fillRect(0, 15, 50, 25);
+            ctx.fillStyle = '#A0A0A0';
+            ctx.fillRect(0, 28, 50, 12);
+            
+            // Полоски
+            ctx.fillStyle = '#808080';
+            ctx.fillRect(10, 17, 6, 20);
+            ctx.fillRect(25, 17, 6, 20);
+            ctx.fillRect(40, 17, 6, 20);
+            
+            // Лапы (передние)
+            ctx.fillStyle = '#A0A0A0';
+            ctx.fillRect(8, 38, 10, 12);
+            ctx.fillRect(32, 38, 10, 12);
+            
+            // Голова
+            ctx.fillStyle = '#C0C0C0';
+            ctx.fillRect(40, 0, 30, 22);
+            
+            // Уши
+            ctx.fillStyle = '#A0A0A0';
+            ctx.fillRect(42, -8, 8, 10);
+            ctx.fillRect(58, -8, 8, 10);
+            ctx.fillStyle = '#E0E0E0';
+            ctx.fillRect(44, -6, 5, 6);
+            ctx.fillRect(60, -6, 5, 6);
+            
+            // Глаза
+            ctx.fillStyle = '#E0E0E0';
+            ctx.fillRect(45, 5, 8, 8);
+            ctx.fillRect(60, 5, 8, 8);
             ctx.fillStyle = '#FFD000';
-            ctx.fillRect(46, 10, 10, 10);
-            ctx.fillRect(62, 10, 10, 10);
+            ctx.fillRect(47, 7, 5, 5);
+            ctx.fillRect(62, 7, 5, 5);
+            ctx.fillStyle = '#000';
+            ctx.fillRect(48, 8, 3, 3);
+            ctx.fillRect(63, 8, 3, 3);
+            
+            // Нос
             ctx.fillStyle = '#FF80A0';
-            ctx.fillRect(68, 20, 6, 5);
+            ctx.fillRect(66, 12, 5, 4);
+            
+            // Усы
+            ctx.fillStyle = '#E0E0E0';
+            ctx.fillRect(35, 10, 10, 2);
+            ctx.fillRect(35, 14, 10, 2);
+            ctx.fillRect(70, 10, 10, 2);
+            ctx.fillRect(70, 14, 10, 2);
+            
             ctx.restore();
+        }
+        
+        // 🖐️ РУКА-РАКЕТКА
+        function drawHandPaddle(x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+            
+            // Ладонь
+            ctx.fillStyle = '#FFB6C1';
+            ctx.fillRect(0, 0, 70, 40);
+            
+            // Пальцы
+            ctx.fillStyle = '#FF9EB5';
+            for (let i = 0; i < 5; i++) {
+                ctx.fillRect(i * 14 - 2, -15, 12, 18);
+            }
+            
+            // Большой палец
+            ctx.fillStyle = '#FF9EB5';
+            ctx.fillRect(-10, 10, 15, 20);
+            
+            // Обводка
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(0, 0, 70, 40);
+            
+            ctx.restore();
+        }
+        
+        // 🏓 МЯЧ
+        function drawBall(x, y) {
+            ctx.fillStyle = '#FFFF00';
+            ctx.beginPath();
+            ctx.arc(x, y, ball.size, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Блик
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.arc(x - 4, y - 4, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Полоски на мяче
+            ctx.strokeStyle = '#FF6B6B';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(x, y, ball.size - 3, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+        
+        function updateBall() {
+            ball.x += ball.dx;
+            ball.y += ball.dy;
+            
+            // Отскок от стен
+            if (ball.x - ball.size < 0 || ball.x + ball.size > canvas.width) {
+                ball.dx = -ball.dx;
+            }
+            
+            // ✅ КОТИК ВСЕГДА ОТБИВАЕТ (непроигрышный)
+            if (ball.y + ball.size > catPaddle.y &&
+                ball.y - ball.size < catPaddle.y + catPaddle.height &&
+                ball.x > catPaddle.x &&
+                ball.x < catPaddle.x + catPaddle.width) {
+                
+                // Отбиваем вверх
+                ball.dy = -Math.abs(ball.dy) - 0.3;
+                
+                // Меняем угол в зависимости от куда попал мяч
+                const hitPos = (ball.x - catPaddle.x) / catPaddle.width - 0.5;
+                ball.dx = hitPos * 8;
+                
+                score++;
+                
+                // Увеличиваем скорость постепенно
+                if (score % 3 === 0 && Math.abs(ball.dy) < 12) {
+                    ball.dy = ball.dy * 1.1;
+                }
+            }
+            
+            // Рука отбивает
+            if (ball.y - ball.size < handPaddle.y + handPaddle.height &&
+                ball.y + ball.size > handPaddle.y &&
+                ball.x > handPaddle.x &&
+                ball.x < handPaddle.x + handPaddle.width) {
+                
+                ball.dy = Math.abs(ball.dy) + 0.3;
+                
+                const hitPos = (ball.x - handPaddle.x) / handPaddle.width - 0.5;
+                ball.dx = hitPos * 8;
+            }
+            
+            // Мяч улетел вверх (рука пропустила)
+            if (ball.y < 0) {
+                ball.y = canvas.height / 2;
+                ball.x = canvas.width / 2;
+                ball.dy = 4;
+                ball.dx = 0;
+                score++;
+                
+                // Проверяем победу
+                if (score >= 10) {
+                    catState.happiness = Math.min(100, catState.happiness + 20);
+                    saveState();
+                    window.location.href = 'index.html';
+                }
+            }
+            
+            // ❌ Мяч улетел вниз (котик пропустил) - НЕВОЗМОЖНО!
+            // Но на всякий случай重置
+            if (ball.y > canvas.height) {
+                ball.y = canvas.height / 2;
+                ball.x = canvas.width / 2;
+                ball.dy = 4;
+                ball.dx = 0;
+            }
+        }
+        
+        function updateCatPaddle() {
+            // Движение котика
+            if (isMovingLeft) {
+                catPaddle.x -= catPaddle.speed;
+            }
+            if (isMovingRight) {
+                catPaddle.x += catPaddle.speed;
+            }
+            
+            // Ограничение краёв
+            catPaddle.x = Math.max(0, Math.min(canvas.width - catPaddle.width, catPaddle.x));
+        }
+        
+        function updateHandPaddle() {
+            // ИИ руки - следует за мячом
+            const handCenter = handPaddle.x + handPaddle.width / 2;
+            const speed = 3.5;
+            
+            if (handCenter < ball.x - 20) {
+                handPaddle.x += speed;
+            } else if (handCenter > ball.x + 20) {
+                handPaddle.x -= speed;
+            }
+            
+            handPaddle.x = Math.max(0, Math.min(canvas.width - handPaddle.width, handPaddle.x));
         }
         
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            ctx.fillStyle = '#E8F4F8';
+            // Фон (теннисный корт)
+            ctx.fillStyle = '#4A7C59';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            healTargets.forEach(target => {
-                if (!target.healed) {
-                    ctx.fillStyle = '#FF6B6B';
-                    ctx.beginPath();
-                    ctx.arc(target.x, target.y, target.size, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    ctx.fillStyle = '#800000';
-                    ctx.fillRect(target.x - 8, target.y - 3, 16, 6);
-                    ctx.fillRect(target.x - 3, target.y - 8, 6, 16);
-                }
-            });
+            // Линии корта
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([10, 10]);
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height / 2);
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
             
-            drawCat(100, 150);
+            // Сетка
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, canvas.height / 2 - 2, canvas.width, 4);
             
+            // Обновление
+            updateCatPaddle();
+            updateHandPaddle();
+            updateBall();
+            
+            // Отрисовка
+            drawCatPaddle(catPaddle.x, catPaddle.y, catDirection);
+            drawHandPaddle(handPaddle.x, handPaddle.y);
+            drawBall(ball.x, ball.y);
+            
+            // Счёт
             ctx.fillStyle = '#FFFF00';
             ctx.font = '10px "Press Start 2P"';
-            ctx.fillText('ВЫЛЕЧЕНО: ' + score + '/5', 10, 30);
+            ctx.fillText('СЧЁТ: ' + score + '/10', canvas.width / 2 - 60, 30);
             
+            // Индикатор направления
+            if (isMovingLeft || isMovingRight) {
+                ctx.fillStyle = '#00FF00';
+                ctx.fillText(catDirection === -1 ? '⬅️' : '➡️', catPaddle.x + 35, catPaddle.y - 10);
+            }
+            
+            frame++;
             requestAnimationFrame(animate);
         }
         
