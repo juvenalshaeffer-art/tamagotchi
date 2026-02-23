@@ -15,6 +15,7 @@
 <body>
     <div class="tamagotchi">
         <div class="screen"><canvas id="gameCanvas"></canvas><div class="scanlines"></div></div>
+        <!-- ✅ Кнопки по краям экрана -->
         <div class="controls">
             <button class="ctrl-btn btn-a" id="btnJump"><span>🦘</span><span class="btn-label">ПРЫГ</span></button>
             <button class="ctrl-btn btn-b" id="btnDouble"><span>⚡</span><span class="btn-label">2X</span></button>
@@ -72,12 +73,4 @@
                 if (isColliding) { const isLandingOnTop = catVelocityY > 0 && catBottom - obsTop < 25 && catY + 25 < obsTop; if (isLandingOnTop) { obstacles.splice(i, 1); catVelocityY = -5; score++; } else { catState.happiness = Math.max(0, catState.happiness - 10); saveState(); window.location.href = 'index.html'; } }
                 if (obs.x < -50) { obstacles.splice(i, 1); score++; }
             });
-            drawCat(catX, catY);
-            ctx.fillStyle = '#FFFF00'; ctx.font = '10px "Press Start 2P"'; ctx.fillText('ПРОЙДЕНО: ' + score, 10, 30);
-            if (isJumping && canDoubleJump && !hasDoubleJumped) { ctx.fillStyle = '#00FF00'; ctx.fillText('⚡ 2 ПРЫЖОК: ГОТОВ', 10, 50); }
-            frame++; requestAnimationFrame(animate);
-        }
-        animate();
-    </script>
-</body>
-</html>
+            drawCat(catX, cat
