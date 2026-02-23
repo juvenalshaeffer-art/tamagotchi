@@ -5,6 +5,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🐱 Котик Тамагочи</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Дополнительные стили для комнаты */
+        .cat-name {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255,255,255,0.9);
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 10px;
+            border: 3px solid #FF6B9D;
+            z-index: 50;
+        }
+
+        /* Кнопки в ряд равномерно */
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+            width: 90%;
+            padding: 15px;
+        }
+
+        .btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 4px solid;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.3);
+            transition: transform 0.1s;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            margin: 0 auto;
+        }
+
+        .btn:active {
+            transform: translateY(5px);
+            box-shadow: 0 0 0 rgba(0,0,0,0.3);
+        }
+
+        .btn-feed { border-color: #FF6B6B; background: #FFB3B3; }
+        .btn-walk { border-color: #4ECDC4; background: #B3E5E0; }
+        .btn-play { border-color: #95E1D3; background: #C8F0E8; }
+        .btn-heal { border-color: #FFD93D; background: #FFEAA7; }
+        .btn-sleep { border-color: #A8E6CF; background: #D5F5E6; }
+    </style>
 </head>
 <body>
     <div class="tamagotchi">
@@ -16,22 +68,20 @@
                 <div class="stat">💚 <div class="bar"><div class="fill" id="healthBar"></div></div></div>
                 <div class="stat">⚡ <div class="bar"><div class="fill" id="energyBar"></div></div></div>
             </div>
+            <div class="cat-name" id="catNameDisplay">КОТИК</div>
         </div>
         
         <div class="buttons">
-            <a href="feed.html" class="btn btn-feed">🍖</a>
-            <a href="walk.html" class="btn btn-walk">🚶</a>
-            <a href="play.html" class="btn btn-play">🎮</a>
-            <a href="heal.html" class="btn btn-heal">💚</a>
-            <button class="btn btn-name" onclick="changeName()">✏️</button>
+            <a href="feed.html" class="btn btn-feed" title="Кормить">🍖</a>
+            <a href="walk.html" class="btn btn-walk" title="Гулять">🚶</a>
+            <a href="play.html" class="btn btn-play" title="Играть">🎮</a>
+            <a href="heal.html" class="btn btn-heal" title="Лечить">💚</a>
+            <button class="btn btn-sleep" onclick="toggleSleep()" title="Спать">💤</button>
         </div>
-        
-        <div class="cat-name" id="catNameDisplay">КОТИК</div>
     </div>
 
     <script src="game.js"></script>
     <script>
-        // Инициализация главного экрана
         initMainScreen();
     </script>
 </body>
