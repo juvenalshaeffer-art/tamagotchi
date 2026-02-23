@@ -5,45 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>🍖 Кормление - Тамагочи</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        if (window.Telegram?.WebApp) {
+            window.Telegram.WebApp.expand();
+            window.Telegram.WebApp.ready();
+        }
+    </script>
     <style>
-        /* Дополнительные стили для кнопок управления */
         .controls {
-            position: absolute;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 20px;
-            z-index: 50;
+            position: absolute; bottom: 80px; left: 50%;
+            transform: translateX(-50%); display: flex; gap: 20px; z-index: 50;
         }
-        
         .ctrl-btn {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            border: 4px solid #fff;
-            background: rgba(255, 107, 107, 0.8);
-            color: #fff;
-            font-size: 32px;
-            cursor: pointer;
+            width: 80px; height: 80px; border-radius: 50%;
+            border: 4px solid #fff; background: rgba(255,107,107,0.8);
+            color: #fff; font-size: 32px; cursor: pointer;
             box-shadow: 0 4px 0 rgba(0,0,0,0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            user-select: none;
-            -webkit-user-select: none;
+            display: flex; align-items: center; justify-content: center;
+            user-select: none; -webkit-user-select: none;
         }
-        
-        .ctrl-btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 0 0 rgba(0,0,0,0.3);
-        }
-        
-        /* Для мобильных - убираем выделение текста */
-        * {
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
-        }
+        .ctrl-btn:active { transform: translateY(4px); box-shadow: 0 0 0 rgba(0,0,0,0.3); }
+        * { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
     </style>
 </head>
 <body>
@@ -52,13 +35,10 @@
             <canvas id="gameCanvas"></canvas>
             <div class="scanlines"></div>
         </div>
-        
-        <!-- 🎮 Кнопки управления для мобильных -->
         <div class="controls">
             <button class="ctrl-btn" id="btnLeft">⬅️</button>
             <button class="ctrl-btn" id="btnRight">➡️</button>
         </div>
-        
         <div class="instructions" id="instructions">ЛОВИ РЫБКИ! КНОПКИ ← →</div>
         <a href="index.html" class="back-btn">⬅ НАЗАД</a>
     </div>
@@ -71,186 +51,86 @@
         canvas.height = canvas.offsetHeight;
         
         const groundY = canvas.height - 60;
-        let catX = canvas.width / 2 - 35;
-        let catY = groundY - 50;
-        let catDirection = 1; // 1 = вправо, -1 = влево
-        let foodItems = [];
-        let score = 0;
-        let frame = 0;
-        
-        // Скорость движения
-        const moveSpeed = 25;
+        let catX = canvas.width / 2 - 35, catY = groundY - 50, catDirection = 1;
+        let foodItems = [], score = 0, frame = 0, moveSpeed = 25;
         
         document.getElementById('instructions').style.display = 'block';
-        setTimeout(() => {
-            document.getElementById('instructions').style.display = 'none';
-        }, 4000);
+        setTimeout(() => { document.getElementById('instructions').style.display = 'none'; }, 4000);
         
-        // 🎮 Управление кнопками (мышь + тач)
-        const btnLeft = document.getElementById('btnLeft');
-        const btnRight = document.getElementById('btnRight');
+        const btnLeft = document.getElementById('btnLeft'), btnRight = document.getElementById('btnRight');
+        function moveLeft() { catX = Math.max(0, catX - moveSpeed); catDirection = -1; }
+        function moveRight() { catX = Math.min(canvas.width - 80, catX + moveSpeed); catDirection = 1; }
         
-        // Функция движения
-        function moveLeft() {
-            catX = Math.max(0, catX - moveSpeed);
-            catDirection = -1;
-        }
-        
-        function moveRight() {
-            catX = Math.min(canvas.width - 80, catX + moveSpeed);
-            catDirection = 1;
-        }
-        
-        // Мышь
-        btnLeft.addEventListener('mousedown', (e) => { e.preventDefault(); moveLeft(); });
-        btnRight.addEventListener('mousedown', (e) => { e.preventDefault(); moveRight(); });
-        
-        // Тач (мобильные)
-        btnLeft.addEventListener('touchstart', (e) => { e.preventDefault(); moveLeft(); });
-        btnRight.addEventListener('touchstart', (e) => { e.preventDefault(); moveRight(); });
-        
-        // Клавиатура (для десктопа)
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft') { moveLeft(); }
-            if (e.key === 'ArrowRight') { moveRight(); }
+        [btnLeft, btnRight].forEach((btn, i) => {
+            const fn = i ? moveRight : moveLeft;
+            btn.addEventListener('mousedown', e => { e.preventDefault(); fn(); });
+            btn.addEventListener('touchstart', e => { e.preventDefault(); fn(); });
         });
         
-        // 🐱 КОТИК С ПОВОРОТОМ
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowLeft') moveLeft();
+            if (e.key === 'ArrowRight') moveRight();
+        });
+        
         function drawCat(x, y, direction) {
-            ctx.save();
-            ctx.translate(x, y);
-            
-            // 🔄 Отражаем котика по горизонтали
-            if (direction === -1) {
-                ctx.scale(-1, 1);
-                ctx.translate(-70, 0); // Смещаем обратно после отражения
-            }
-            
-            // Хвост
+            ctx.save(); ctx.translate(x, y);
+            if (direction === -1) { ctx.scale(-1, 1); ctx.translate(-70, 0); }
             const tailWag = Math.sin(frame * 0.2) * 8;
             ctx.fillStyle = '#A0A0A0';
-            ctx.fillRect(-20, 30 + tailWag, 25, 8);
-            ctx.fillRect(-30, 25 + tailWag, 15, 8);
-            
-            // Задние лапы
+            ctx.fillRect(-20, 30 + tailWag, 25, 8); ctx.fillRect(-30, 25 + tailWag, 15, 8);
             const legOffset = Math.sin(frame * 0.3) * 8;
             ctx.fillStyle = '#A0A0A0';
-            ctx.fillRect(5 + legOffset, 48, 8, 12);
-            ctx.fillRect(20 - legOffset, 48, 8, 12);
-            
-            // Тело
-            ctx.fillStyle = '#C0C0C0';
-            ctx.fillRect(0, 20, 50, 30);
-            ctx.fillStyle = '#A0A0A0';
-            ctx.fillRect(0, 35, 50, 15);
-            
-            // Полоски
+            ctx.fillRect(5 + legOffset, 48, 8, 12); ctx.fillRect(20 - legOffset, 48, 8, 12);
+            ctx.fillStyle = '#C0C0C0'; ctx.fillRect(0, 20, 50, 30);
+            ctx.fillStyle = '#A0A0A0'; ctx.fillRect(0, 35, 50, 15);
             ctx.fillStyle = '#808080';
-            ctx.fillRect(10, 22, 6, 24);
-            ctx.fillRect(25, 22, 6, 24);
-            ctx.fillRect(40, 22, 6, 24);
-            
-            // Передние лапы
+            ctx.fillRect(10, 22, 6, 24); ctx.fillRect(25, 22, 6, 24); ctx.fillRect(40, 22, 6, 24);
             ctx.fillStyle = '#A0A0A0';
-            ctx.fillRect(42 + legOffset, 48, 8, 12);
-            ctx.fillRect(55 - legOffset, 48, 8, 12);
-            
-            // Голова
-            ctx.fillStyle = '#C0C0C0';
-            ctx.fillRect(40, 5, 32, 26);
-            
-            // Уши
-            ctx.fillStyle = '#A0A0A0';
-            ctx.fillRect(42, 0, 10, 10);
-            ctx.fillRect(60, 0, 10, 10);
+            ctx.fillRect(42 + legOffset, 48, 8, 12); ctx.fillRect(55 - legOffset, 48, 8, 12);
+            ctx.fillStyle = '#C0C0C0'; ctx.fillRect(40, 5, 32, 26);
+            ctx.fillStyle = '#A0A0A0'; ctx.fillRect(42, 0, 10, 10); ctx.fillRect(60, 0, 10, 10);
+            ctx.fillStyle = '#E0E0E0'; ctx.fillRect(44, 2, 6, 6); ctx.fillRect(62, 2, 6, 6);
+            ctx.fillStyle = '#E0E0E0'; ctx.fillRect(46, 10, 10, 10); ctx.fillRect(62, 10, 10, 10);
+            ctx.fillStyle = '#FFD000'; ctx.fillRect(48, 12, 6, 6); ctx.fillRect(64, 12, 6, 6);
+            ctx.fillStyle = '#000'; ctx.fillRect(50, 13, 3, 3); ctx.fillRect(66, 13, 3, 3);
+            ctx.fillStyle = '#FF80A0'; ctx.fillRect(68, 20, 6, 5);
             ctx.fillStyle = '#E0E0E0';
-            ctx.fillRect(44, 2, 6, 6);
-            ctx.fillRect(62, 2, 6, 6);
-            
-            // Глаза
-            ctx.fillStyle = '#E0E0E0';
-            ctx.fillRect(46, 10, 10, 10);
-            ctx.fillRect(62, 10, 10, 10);
-            ctx.fillStyle = '#FFD000';
-            ctx.fillRect(48, 12, 6, 6);
-            ctx.fillRect(64, 12, 6, 6);
-            ctx.fillStyle = '#000';
-            ctx.fillRect(50, 13, 3, 3);
-            ctx.fillRect(66, 13, 3, 3);
-            
-            // Нос
-            ctx.fillStyle = '#FF80A0';
-            ctx.fillRect(68, 20, 6, 5);
-            
-            // Усы (с обеих сторон)
-            ctx.fillStyle = '#E0E0E0';
-            ctx.fillRect(35, 15, 12, 2);
-            ctx.fillRect(35, 19, 12, 2);
-            ctx.fillRect(35, 23, 12, 2);
-            ctx.fillRect(74, 15, 12, 2);
-            ctx.fillRect(74, 19, 12, 2);
-            ctx.fillRect(74, 23, 12, 2);
-            
+            ctx.fillRect(35, 15, 12, 2); ctx.fillRect(35, 19, 12, 2); ctx.fillRect(35, 23, 12, 2);
+            ctx.fillRect(74, 15, 12, 2); ctx.fillRect(74, 19, 12, 2); ctx.fillRect(74, 23, 12, 2);
             ctx.restore();
         }
         
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#87CEEB'; ctx.fillRect(0, 0, canvas.width, groundY);
+            ctx.fillStyle = '#8B4513'; ctx.fillRect(0, groundY, canvas.width, 60);
+            ctx.fillStyle = '#228B22'; ctx.fillRect(0, groundY, canvas.width, 12);
             
-            // Фон
-            ctx.fillStyle = '#87CEEB';
-            ctx.fillRect(0, 0, canvas.width, groundY);
-            ctx.fillStyle = '#8B4513';
-            ctx.fillRect(0, groundY, canvas.width, 60);
-            ctx.fillStyle = '#228B22';
-            ctx.fillRect(0, groundY, canvas.width, 12);
-            
-            // 🐟 Спавн рыбок СВЕРХУ
             if (Math.random() < 0.02) {
-                foodItems.push({
-                    x: Math.random() * (canvas.width - 30),
-                    y: -30,
-                    width: 30,
-                    height: 20
-                });
+                foodItems.push({ x: Math.random() * (canvas.width - 30), y: -30, width: 30, height: 20 });
             }
             
-            // 🐟 Рыбки падают ВНИЗ
             ctx.fillStyle = '#FF6B6B';
             foodItems.forEach((food, i) => {
                 food.y += 3;
-                
-                // Рисуем рыбку
                 ctx.fillRect(food.x, food.y, food.width, food.height);
-                // Хвост рыбки
-                ctx.beginPath();
-                ctx.moveTo(food.x, food.y + 10);
-                ctx.lineTo(food.x - 10, food.y + 5);
-                ctx.lineTo(food.x - 10, food.y + 15);
-                ctx.fill();
+                ctx.beginPath(); ctx.moveTo(food.x, food.y + 10);
+                ctx.lineTo(food.x - 10, food.y + 5); ctx.lineTo(food.x - 10, food.y + 15); ctx.fill();
                 
-                // Столкновение с котиком
                 if (catX < food.x + food.width && catX + 70 > food.x &&
                     catY < food.y + food.height && catY + 50 > food.y) {
-                    foodItems.splice(i, 1);
-                    score++;
+                    foodItems.splice(i, 1); score++;
                     catState.hunger = Math.min(100, catState.hunger + 8);
                     saveState();
                 }
-                
                 if (food.y > groundY) foodItems.splice(i, 1);
             });
             
             drawCat(catX, catY, catDirection);
-            
-            ctx.fillStyle = '#FFFF00';
-            ctx.font = '10px "Press Start 2P"';
+            ctx.fillStyle = '#FFFF00'; ctx.font = '10px "Press Start 2P"';
             ctx.fillText('СЪЕДЕНО: ' + score, 10, 30);
-            
-            frame++;
-            requestAnimationFrame(animate);
+            frame++; requestAnimationFrame(animate);
         }
-        
         animate();
     </script>
 </body>
