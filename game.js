@@ -89,7 +89,6 @@ function initMainScreen() {
         sofaLight: '#A52A2A',
         window: '#87CEEB',
         windowFrame: '#FFFFFF',
-        table: '#654321',
         cat1: '#C0C0C0',
         cat2: '#A0A0A0',
         cat3: '#808080',
@@ -101,26 +100,19 @@ function initMainScreen() {
     let frame = 0;
     const groundY = canvas.height - 60;
     
-    // ✅ ИСПРАВЛЕННЫЕ РАЗМЕРЫ ОБЪЕКТОВ
+    // Объекты комнаты (СТОЛИК УБРАН)
     const sofa = { 
         x: 80, 
-        y: groundY - 70,    // ✅ Диван стоит на полу (70px высота)
-        width: 180,          // ✅ Диван больше (было 120)
-        height: 70           // ✅ Диван выше (было 50)
+        y: groundY - 70,
+        width: 180,
+        height: 70
     };
     
     const window = { 
         x: canvas.width - 180, 
-        y: 80,               // ✅ Окно на стене (было groundY - 120 = на полу)
-        width: 120,          // ✅ Окно больше
-        height: 140          // ✅ Окно выше
-    };
-    
-    const table = { 
-        x: canvas.width - 320, 
-        y: groundY - 50, 
-        width: 90, 
-        height: 50 
+        y: 80,
+        width: 120,
+        height: 140
     };
     
     let autoMoveTimer = 0;
@@ -153,10 +145,6 @@ function initMainScreen() {
             } else if (rand < 0.6 && catState.happiness < 60) {
                 currentTarget = 'window';
                 mainScreenState.targetX = window.x + 30;
-                mainScreenState.action = 'walking';
-            } else if (rand < 0.8) {
-                currentTarget = 'table';
-                mainScreenState.targetX = table.x - 60;
                 mainScreenState.action = 'walking';
             } else {
                 currentTarget = 'random';
@@ -200,7 +188,7 @@ function initMainScreen() {
             ctx.fillRect(i, groundY + 10, 35, 5);
         }
         
-        // 🪟 Окно (ИСПРАВЛЕНО - на стене)
+        // 🪟 Окно
         ctx.fillStyle = COLORS.windowFrame;
         ctx.fillRect(window.x, window.y, window.width, window.height);
         ctx.fillStyle = COLORS.window;
@@ -220,7 +208,7 @@ function initMainScreen() {
         ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(window.x - 15, window.y + window.height - 8, window.width + 30, 15);
         
-        // 🛋️ Диван (ИСПРАВЛЕНО - больше)
+        // 🛋️ Диван
         ctx.fillStyle = COLORS.sofa;
         ctx.fillRect(sofa.x, sofa.y, sofa.width, sofa.height);
         ctx.fillStyle = COLORS.sofaLight;
@@ -239,25 +227,9 @@ function initMainScreen() {
         ctx.fillStyle = '#4A0000';
         ctx.fillRect(sofa.x + 15, sofa.y + sofa.height - 8, 20, 8);
         ctx.fillRect(sofa.x + sofa.width - 35, sofa.y + sofa.height - 8, 20, 8);
-        
-        // 🪑 Столик
-        ctx.fillStyle = COLORS.table;
-        ctx.fillRect(table.x, table.y, table.width, table.height);
-        ctx.fillStyle = '#8B6914';
-        ctx.fillRect(table.x + 8, table.y + 8, table.width - 16, 12);
-        
-        // Ножки стола
-        ctx.fillStyle = '#4A3010';
-        ctx.fillRect(table.x + 15, table.y + table.height, 12, 25);
-        ctx.fillRect(table.x + table.width - 27, table.y + table.height, 12, 25);
-        
-        // Чашка на столе
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(table.x + 35, table.y - 18, 22, 20);
-        ctx.fillStyle = '#8B4513';
-        ctx.fillRect(table.x + 52, table.y - 15, 10, 14);
     }
     
+    // ✅ ИСПРАВЛЕНО: Лапы двигаются только при ходьбе
     function drawCat(x, y, direction, action) {
         ctx.save();
         ctx.translate(x, y);
@@ -268,6 +240,7 @@ function initMainScreen() {
         }
         
         if (action === 'sleeping') {
+            // 😴 Спящий котик
             ctx.fillStyle = COLORS.cat2;
             ctx.beginPath();
             ctx.ellipse(35, 35, 30, 25, 0, 0, Math.PI * 2);
@@ -278,6 +251,7 @@ function initMainScreen() {
             ctx.arc(55, 30, 15, 0, Math.PI * 2);
             ctx.fill();
             
+            // Закрытые глаза
             ctx.strokeStyle = '#000';
             ctx.lineWidth = 2;
             ctx.beginPath();
@@ -287,12 +261,14 @@ function initMainScreen() {
             ctx.lineTo(70, 28);
             ctx.stroke();
             
+            // Zzz
             ctx.fillStyle = '#87CEEB';
             ctx.font = '12px "Press Start 2P"';
             ctx.fillText('Z', 40 + Math.sin(frame * 0.1) * 3, 10 - Math.cos(frame * 0.1) * 5);
             ctx.fillText('z', 35 + Math.sin(frame * 0.15) * 3, 5 - Math.cos(frame * 0.15) * 5);
             
         } else if (action === 'window') {
+            // 🪟 Котик на подоконнике (лапы не двигаются)
             ctx.fillStyle = COLORS.cat2;
             ctx.fillRect(0, 20, 50, 30);
             ctx.fillStyle = COLORS.cat1;
@@ -326,17 +302,21 @@ function initMainScreen() {
             ctx.fillStyle = COLORS.catNose;
             ctx.fillRect(68, 20, 6, 5);
             
-            const tailWag = Math.sin(frame * 0.1) * 5;
+            // Хвост слегка двигается
+            const tailWag = Math.sin(frame * 0.1) * 3;
             ctx.fillStyle = COLORS.cat2;
             ctx.fillRect(-20, 35 + tailWag, 25, 8);
             
         } else {
-            const tailWag = action === 'walking' ? Math.sin(frame * 0.3) * 10 : Math.sin(frame * 0.2) * 8;
+            // 🐱 Обычный котик
+            // ✅ Хвост двигается всегда (даже когда стоит)
+            const tailWag = Math.sin(frame * 0.2) * 8;
             ctx.fillStyle = COLORS.cat2;
             ctx.fillRect(-20, 30 + tailWag, 25, 8);
             ctx.fillRect(-30, 25 + tailWag, 15, 8);
             
-            const legOffset = action === 'walking' ? Math.sin(frame * 0.4) * 10 : Math.sin(frame * 0.3) * 8;
+            // ✅ Лапы двигаются ТОЛЬКО при ходьбе
+            const legOffset = action === 'walking' ? Math.sin(frame * 0.4) * 10 : 0;
             ctx.fillStyle = COLORS.cat2;
             ctx.fillRect(5 + legOffset, 48, 8, 12);
             ctx.fillRect(20 - legOffset, 48, 8, 12);
@@ -351,6 +331,7 @@ function initMainScreen() {
             ctx.fillRect(25, 22, 6, 24);
             ctx.fillRect(40, 22, 6, 24);
             
+            // Передние лапы тоже только при ходьбе
             ctx.fillStyle = COLORS.cat2;
             ctx.fillRect(42 + legOffset, 48, 8, 12);
             ctx.fillRect(55 - legOffset, 48, 8, 12);
