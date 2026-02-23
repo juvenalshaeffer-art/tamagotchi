@@ -1,193 +1,105 @@
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
     background: #000;
     font-family: 'Press Start 2P', cursive;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    overflow: hidden;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; overflow: hidden;
 }
 
-/* Tamagotchi корпус */
 .tamagotchi {
-    width: 100%;
-    max-width: 500px;
-    height: 100vh;
-    max-height: 700px;
+    width: 100%; max-width: 500px; height: 100vh; max-height: 700px;
     background: linear-gradient(180deg, #FF6B9D 0%, #FF8FAB 50%, #FFB3C6 100%);
-    border-radius: 30px;
-    padding: 30px 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    box-shadow: 
-        0 10px 30px rgba(0,0,0,0.5),
-        inset 0 5px 15px rgba(255,255,255,0.3);
+    border-radius: 30px; padding: 30px 20px;
+    display: flex; flex-direction: column; align-items: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 5px 15px rgba(255,255,255,0.3);
     position: relative;
 }
 
-/* Экран */
 .screen {
-    width: 100%;
-    height: 60%;
-    background: #9EA792;
-    border-radius: 15px;
+    width: 100%; height: 60%;
+    background: #9EA792; border-radius: 15px;
     border: 8px solid #4a4a4a;
     box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
-    position: relative;
-    overflow: hidden;
+    position: relative; overflow: hidden;
 }
 
 #mainCanvas, #gameCanvas {
-    width: 100%;
-    height: 100%;
+    width: 100%; height: 100%;
     image-rendering: pixelated;
+    image-rendering: crisp-edges;
 }
 
-/* Статистика */
 .stats-overlay {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    background: rgba(0,0,0,0.7);
-    padding: 10px;
-    border-radius: 8px;
-    font-size: 8px;
+    position: absolute; top: 10px; left: 10px;
+    background: rgba(0,0,0,0.7); padding: 10px;
+    border-radius: 8px; font-size: 8px;
 }
 
-.stat {
-    display: flex;
-    align-items: center;
-    margin: 5px 0;
-    gap: 5px;
-}
+.stat { display: flex; align-items: center; margin: 5px 0; gap: 5px; }
 
 .bar {
-    width: 80px;
-    height: 10px;
-    background: #333;
-    border: 2px solid #fff;
-    border-radius: 5px;
-    overflow: hidden;
+    width: 80px; height: 10px;
+    background: #333; border: 2px solid #fff;
+    border-radius: 5px; overflow: hidden;
 }
 
-.fill {
-    height: 100%;
-    background: #00FF00;
-    transition: width 0.3s;
-}
+.fill { height: 100%; background: #00FF00; transition: width 0.3s; }
 
-/* Кнопки */
 .buttons {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 15px;
-    margin-top: 30px;
-    width: 100%;
-    padding: 20px;
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 12px; margin-top: 20px; width: 90%; padding: 15px;
 }
 
 .btn {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    border: 4px solid;
-    font-size: 24px;
-    cursor: pointer;
+    width: 60px; height: 60px; border-radius: 50%;
+    border: 4px solid; font-size: 24px; cursor: pointer;
     box-shadow: 0 5px 0 rgba(0,0,0,0.3);
-    transition: transform 0.1s;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #fff;
+    transition: transform 0.1s; text-decoration: none;
+    display: flex; align-items: center; justify-content: center;
+    background: #fff; margin: 0 auto;
 }
 
-.btn:active {
-    transform: translateY(5px);
-    box-shadow: 0 0 0 rgba(0,0,0,0.3);
-}
+.btn:active { transform: translateY(5px); box-shadow: 0 0 0 rgba(0,0,0,0.3); }
 
 .btn-feed { border-color: #FF6B6B; background: #FFB3B3; }
 .btn-walk { border-color: #4ECDC4; background: #B3E5E0; }
 .btn-play { border-color: #95E1D3; background: #C8F0E8; }
 .btn-heal { border-color: #FFD93D; background: #FFEAA7; }
-.btn-name { border-color: #A8E6CF; background: #D5F5E6; font-size: 16px; }
+.btn-sleep { border-color: #A8E6CF; background: #D5F5E6; }
 
-/* Имя котика */
 .cat-name {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    background: rgba(255,255,255,0.9);
-    padding: 8px 15px;
-    border-radius: 8px;
-    font-size: 10px;
-    border: 3px solid #FF6B9D;
+    position: absolute; top: 15px; right: 15px;
+    background: rgba(255,255,255,0.9); padding: 8px 15px;
+    border-radius: 8px; font-size: 10px;
+    border: 3px solid #FF6B9D; z-index: 50;
 }
 
-/* Scanlines эффект */
 .scanlines {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: repeating-linear-gradient(
-        0deg,
-        rgba(0,0,0,0.1) 0px,
-        rgba(0,0,0,0.1) 2px,
-        transparent 2px,
-        transparent 4px
-    );
-    pointer-events: none;
-    z-index: 10;
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15) 0px, rgba(0,0,0,0.15) 2px, transparent 2px, transparent 4px);
+    pointer-events: none; z-index: 100; opacity: 0.6;
 }
 
-/* Кнопка назад */
 .back-btn {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
+    position: absolute; bottom: 20px; left: 50%;
     transform: translateX(-50%);
-    padding: 15px 30px;
-    background: #FF6B9D;
-    border: 4px solid #fff;
-    border-radius: 20px;
-    color: #fff;
-    font-family: 'Press Start 2P', cursive;
-    font-size: 12px;
-    cursor: pointer;
-    text-decoration: none;
+    padding: 15px 30px; background: #FF6B9D;
+    border: 4px solid #fff; border-radius: 20px;
+    color: #fff; font-family: 'Press Start 2P', cursive;
+    font-size: 12px; cursor: pointer; text-decoration: none;
     box-shadow: 0 5px 0 rgba(0,0,0,0.3);
 }
 
-.back-btn:active {
-    transform: translateX(-50%) translateY(5px);
-    box-shadow: 0 0 0 rgba(0,0,0,0.3);
-}
+.back-btn:active { transform: translateX(-50%) translateY(5px); box-shadow: 0 0 0 rgba(0,0,0,0.3); }
 
-/* Инструкция */
 .instructions {
-    position: absolute;
-    bottom: 80px;
-    left: 50%;
+    position: absolute; bottom: 80px; left: 50%;
     transform: translateX(-50%);
-    background: rgba(0,0,0,0.9);
-    color: #FFFF00;
-    padding: 10px 20px;
-    border-radius: 10px;
-    font-size: 8px;
-    text-align: center;
-    border: 3px solid #FFFF00;
-    display: none;
-    z-index: 20;
+    background: rgba(0,0,0,0.9); color: #FFFF00;
+    padding: 10px 20px; border-radius: 10px;
+    font-size: 8px; text-align: center;
+    border: 3px solid #FFFF00; display: none; z-index: 20;
 }
