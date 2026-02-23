@@ -12,7 +12,7 @@
             <canvas id="gameCanvas"></canvas>
             <div class="scanlines"></div>
         </div>
-        <div class="instructions" id="instructions">ПРЫГАЙ ЧЕРЕЗ ПРЕПЯТСТВИЯ (ПРОБЕЛ)</div>
+        <div class="instructions" id="instructions">ПРЫГАЙ ЧЕРЕЗ ПРЕПЯТСТВИЯ (ПРОБЕЛ) | 2 ПРЫЖКА!</div>
         <a href="index.html" class="back-btn">⬅ НАЗАД</a>
     </div>
 
@@ -24,9 +24,12 @@
         canvas.height = canvas.offsetHeight;
         
         const groundY = canvas.height - 60;
+        let catX = 100;
         let catY = groundY - 50;
         let catVelocityY = 0;
         let isJumping = false;
+        let canDoubleJump = false;
+        let hasDoubleJumped = false;
         let obstacles = [];
         let score = 0;
         let frame = 0;
@@ -37,24 +40,93 @@
         }, 4000);
         
         document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space' && !isJumping) {
+            if (e.code === 'Space') {
                 e.preventDefault();
-                catVelocityY = -12;
-                isJumping = true;
+                if (!isJumping) {
+                    // Первый прыжок
+                    catVelocityY = -12;
+                    isJumping = true;
+                    canDoubleJump = true;
+                    hasDoubleJumped = false;
+                } else if (canDoubleJump && !hasDoubleJumped) {
+                    // ✅ Двойной прыжок
+                    catVelocityY = -10;
+                    hasDoubleJumped = true;
+                    canDoubleJump = false;
+                }
             }
         });
         
+        // 🐱 ПОЛНЫЙ КОТИК (с глазами, лапами, хвостом, усами)
         function drawCat(x, y) {
             ctx.save();
             ctx.translate(x, y);
+            
+            // Хвост
+            const tailWag = isJumping ? 0 : Math.sin(frame * 0.2) * 8;
+            ctx.fillStyle = '#A0A0A0';
+            ctx.fillRect(-20, 30 + tailWag, 25, 8);
+            ctx.fillRect(-30, 25 + tailWag, 15, 8);
+            
+            // Задние лапы
+            const legOffset = isJumping ? 0 : Math.sin(frame * 0.3) * 8;
+            ctx.fillStyle = '#A0A0A0';
+            ctx.fillRect(5 + legOffset, 48, 8, 12);
+            ctx.fillRect(20 - legOffset, 48, 8, 12);
+            
+            // Тело
             ctx.fillStyle = '#C0C0C0';
             ctx.fillRect(0, 20, 50, 30);
+            ctx.fillStyle = '#A0A0A0';
+            ctx.fillRect(0, 35, 50, 15);
+            
+            // Полоски
+            ctx.fillStyle = '#808080';
+            ctx.fillRect(10, 22, 6, 24);
+            ctx.fillRect(25, 22, 6, 24);
+            ctx.fillRect(40, 22, 6, 24);
+            
+            // Передние лапы
+            ctx.fillStyle = '#A0A0A0';
+            ctx.fillRect(42 + legOffset, 48, 8, 12);
+            ctx.fillRect(55 - legOffset, 48, 8, 12);
+            
+            // Голова
+            ctx.fillStyle = '#C0C0C0';
             ctx.fillRect(40, 5, 32, 26);
-            ctx.fillStyle = '#FFD000';
+            
+            // Уши
+            ctx.fillStyle = '#A0A0A0';
+            ctx.fillRect(42, 0, 10, 10);
+            ctx.fillRect(60, 0, 10, 10);
+            ctx.fillStyle = '#E0E0E0';
+            ctx.fillRect(44, 2, 6, 6);
+            ctx.fillRect(62, 2, 6, 6);
+            
+            // Глаза
+            ctx.fillStyle = '#E0E0E0';
             ctx.fillRect(46, 10, 10, 10);
             ctx.fillRect(62, 10, 10, 10);
+            ctx.fillStyle = '#FFD000';
+            ctx.fillRect(48, 12, 6, 6);
+            ctx.fillRect(64, 12, 6, 6);
+            ctx.fillStyle = '#000';
+            ctx.fillRect(50, 13, 3, 3);
+            ctx.fillRect(66, 13, 3, 3);
+            
+            // Нос
             ctx.fillStyle = '#FF80A0';
             ctx.fillRect(68, 20, 6, 5);
+            
+            // Усы (с обеих сторон)
+            ctx.fillStyle = '#E0E0E0';
+            ctx.fillRect(35, 15, 12, 2);
+            ctx.fillRect(35, 19, 12, 2);
+            ctx.fillRect(35, 23, 12, 2);
+            ctx.fillRect(74, 15, 12, 2);
+            ctx.fillRect(74, 19, 12, 2);
+            ctx.fillRect(74, 23, 12, 2);
+            
             ctx.restore();
         }
         
@@ -68,34 +140,63 @@
             ctx.fillStyle = '#228B22';
             ctx.fillRect(0, groundY, canvas.width, 12);
             
+            // Физика
             catVelocityY += 0.8;
             catY += catVelocityY;
+            
             if (catY >= groundY - 50) {
                 catY = groundY - 50;
                 isJumping = false;
                 catVelocityY = 0;
+                canDoubleJump = false;
+                hasDoubleJumped = false;
             }
             
+            // Спавн препятствий
             if (Math.random() < 0.015) {
                 obstacles.push({
                     x: canvas.width,
                     y: groundY - 40,
-                    width: 30,
+                    width: 35,
                     height: 40
                 });
             }
             
+            // Отрисовка и проверка препятствий
             ctx.fillStyle = '#4ECDC4';
             obstacles.forEach((obs, i) => {
                 obs.x -= 5;
                 ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
                 
-                if (100 < obs.x + obs.width && 150 > obs.x &&
-                    catY < obs.y + obs.height && catY + 50 > obs.y) {
-                    catState.happiness = Math.min(100, catState.happiness + 10);
-                    catState.energy = Math.max(0, catState.energy - 10);
-                    saveState();
-                    window.location.href = 'index.html';
+                // ✅ ПРОВЕРКА СТОЛКНОВЕНИЙ
+                const catBottom = catY + 50;
+                const catRight = catX + 70;
+                const catLeft = catX;
+                const obsTop = obs.y;
+                const obsBottom = obs.y + obs.height;
+                const obsLeft = obs.x;
+                const obsRight = obs.x + obs.width;
+                
+                const isColliding = catLeft < obsRight && catRight > obsLeft &&
+                                    catBottom > obsTop && catY < obsBottom;
+                
+                if (isColliding) {
+                    // Проверяем: котик падает СВЕРХУ на камень?
+                    const isLandingOnTop = catVelocityY > 0 &&  // падает вниз
+                                          catBottom - obsTop < 25 &&  // близко к верху
+                                          catY + 25 < obsTop;  // центр кота выше камня
+                    
+                    if (isLandingOnTop) {
+                        // ✅ Приземлился сверху — убираем камень, игра продолжается
+                        obstacles.splice(i, 1);
+                        catVelocityY = -5;  // небольшой отскок
+                        score++;
+                    } else {
+                        // ❌ Удар сбоку — игра окончена
+                        catState.happiness = Math.max(0, catState.happiness - 10);
+                        saveState();
+                        window.location.href = 'index.html';
+                    }
                 }
                 
                 if (obs.x < -50) {
@@ -104,11 +205,17 @@
                 }
             });
             
-            drawCat(100, catY);
+            drawCat(catX, catY);
             
             ctx.fillStyle = '#FFFF00';
             ctx.font = '10px "Press Start 2P"';
             ctx.fillText('ПРОЙДЕНО: ' + score, 10, 30);
+            
+            // Индикатор двойного прыжка
+            if (isJumping && canDoubleJump && !hasDoubleJumped) {
+                ctx.fillStyle = '#00FF00';
+                ctx.fillText('2 ПРЫЖОК: ГОТОВ', 10, 50);
+            }
             
             frame++;
             requestAnimationFrame(animate);
