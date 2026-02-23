@@ -15,6 +15,7 @@
 <body>
     <div class="tamagotchi">
         <div class="screen"><canvas id="gameCanvas"></canvas><div class="scanlines"></div></div>
+        <!-- ✅ Кнопки по краям экрана -->
         <div class="controls">
             <button class="ctrl-btn btn-a" id="btnLeft"><span>⬅️</span><span class="btn-label">ВЛЕВО</span></button>
             <button class="ctrl-btn btn-b" id="btnRight"><span>➡️</span><span class="btn-label">ВПРАВО</span></button>
@@ -45,54 +46,4 @@
             ctx.save(); ctx.translate(x, y); if (direction === -1) { ctx.scale(-1, 1); ctx.translate(-70, 0); }
             const tailWag = Math.sin(frame * 0.3) * 5; ctx.fillStyle = '#A0A0A0'; ctx.fillRect(-15, 20 + tailWag, 20, 8); ctx.fillRect(-25, 15 + tailWag, 12, 8);
             ctx.fillStyle = '#C0C0C0'; ctx.fillRect(0, 15, 50, 25); ctx.fillStyle = '#A0A0A0'; ctx.fillRect(0, 28, 50, 12);
-            ctx.fillStyle = '#808080'; ctx.fillRect(10, 17, 6, 20); ctx.fillRect(25, 17, 6, 20); ctx.fillRect(40, 17, 6, 20);
-            ctx.fillStyle = '#A0A0A0'; ctx.fillRect(8, 38, 10, 12); ctx.fillRect(32, 38, 10, 12);
-            ctx.fillStyle = '#C0C0C0'; ctx.fillRect(40, 0, 30, 22); ctx.fillStyle = '#A0A0A0'; ctx.fillRect(42, -8, 8, 10); ctx.fillRect(58, -8, 8, 10);
-            ctx.fillStyle = '#E0E0E0'; ctx.fillRect(44, -6, 5, 6); ctx.fillRect(60, -6, 5, 6);
-            ctx.fillStyle = '#E0E0E0'; ctx.fillRect(45, 5, 8, 8); ctx.fillRect(60, 5, 8, 8);
-            ctx.fillStyle = '#FFD000'; ctx.fillRect(47, 7, 5, 5); ctx.fillRect(62, 7, 5, 5);
-            ctx.fillStyle = '#000'; ctx.fillRect(48, 8, 3, 3); ctx.fillRect(63, 8, 3, 3);
-            ctx.fillStyle = '#FF80A0'; ctx.fillRect(66, 12, 5, 4);
-            ctx.fillStyle = '#E0E0E0'; ctx.fillRect(35, 10, 10, 2); ctx.fillRect(35, 14, 10, 2); ctx.fillRect(70, 10, 10, 2); ctx.fillRect(70, 14, 10, 2);
-            ctx.restore();
-        }
-        function drawHandPaddle(x, y) {
-            ctx.save(); ctx.translate(x, y); ctx.fillStyle = '#FFB6C1'; ctx.fillRect(0, 0, 70, 40);
-            ctx.fillStyle = '#FF9EB5'; for (let i = 0; i < 5; i++) ctx.fillRect(i * 14 - 2, -15, 12, 18);
-            ctx.fillStyle = '#FF9EB5'; ctx.fillRect(-10, 10, 15, 20);
-            ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 3; ctx.strokeRect(0, 0, 70, 40); ctx.restore();
-        }
-        function drawBall(x, y) {
-            ctx.fillStyle = '#FFFF00'; ctx.beginPath(); ctx.arc(x, y, ball.size, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.arc(x - 4, y - 4, 4, 0, Math.PI * 2); ctx.fill();
-            ctx.strokeStyle = '#FF6B6B'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, ball.size - 3, 0, Math.PI * 2); ctx.stroke();
-        }
-        function updateBall() {
-            ball.x += ball.dx; ball.y += ball.dy;
-            if (ball.x - ball.size < 0 || ball.x + ball.size > canvas.width) ball.dx = -ball.dx;
-            if (ball.y + ball.size > catPaddle.y && ball.y - ball.size < catPaddle.y + catPaddle.height && ball.x > catPaddle.x && ball.x < catPaddle.x + catPaddle.width) {
-                ball.dy = -Math.abs(ball.dy) - 0.1; const hitPos = (ball.x - catPaddle.x) / catPaddle.width - 0.5; ball.dx = hitPos * 4; score++;
-            }
-            if (ball.y - ball.size < handPaddle.y + handPaddle.height && ball.y + ball.size > handPaddle.y && ball.x > handPaddle.x && ball.x < handPaddle.x + handPaddle.width) {
-                ball.dy = Math.abs(ball.dy) + 0.1; const hitPos = (ball.x - handPaddle.x) / handPaddle.width - 0.5; ball.dx = hitPos * 4;
-            }
-            if (ball.y < 0) { ball.y = canvas.height/2; ball.x = canvas.width/2; ball.dy = 2.5; ball.dx = 0; score++; if (score >= 10) { catState.happiness = Math.min(100, catState.happiness + 20); saveState(); window.location.href = 'index.html'; } }
-            if (ball.y > canvas.height) { ball.y = canvas.height/2; ball.x = canvas.width/2; ball.dy = 2.5; ball.dx = 0; }
-        }
-        function updateCatPaddle() { if (isMovingLeft) catPaddle.x -= catPaddle.speed; if (isMovingRight) catPaddle.x += catPaddle.speed; catPaddle.x = Math.max(0, Math.min(canvas.width - catPaddle.width, catPaddle.x)); }
-        function updateHandPaddle() { const handCenter = handPaddle.x + handPaddle.width/2; const speed = 3; if (handCenter < ball.x - 20) handPaddle.x += speed; else if (handCenter > ball.x + 20) handPaddle.x -= speed; handPaddle.x = Math.max(0, Math.min(canvas.width - handPaddle.width, handPaddle.x)); }
-        function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#4A7C59'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 3; ctx.setLineDash([10, 10]); ctx.beginPath(); ctx.moveTo(0, canvas.height/2); ctx.lineTo(canvas.width, canvas.height/2); ctx.stroke(); ctx.setLineDash([]);
-            ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, canvas.height/2 - 2, canvas.width, 4);
-            updateCatPaddle(); updateHandPaddle(); updateBall();
-            drawCatPaddle(catPaddle.x, catPaddle.y, catDirection); drawHandPaddle(handPaddle.x, handPaddle.y); drawBall(ball.x, ball.y);
-            ctx.fillStyle = '#FFFF00'; ctx.font = '10px "Press Start 2P"'; ctx.fillText('СЧЁТ: ' + score + '/10', canvas.width/2 - 60, 30);
-            if (isMovingLeft || isMovingRight) { ctx.fillStyle = '#00FF00'; ctx.fillText(catDirection === -1 ? '⬅️' : '➡️', catPaddle.x + 35, catPaddle.y - 10); }
-            frame++; requestAnimationFrame(animate);
-        }
-        animate();
-    </script>
-</body>
-</html>
+            ctx.fillStyle = '#808080'; ctx.fillRect(10, 17
