@@ -11,17 +11,15 @@
             if (window.Telegram?.WebApp) { window.Telegram.WebApp.expand(); window.Telegram.WebApp.ready(); }
         });
     </script>
-    <style>
-        .controls { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; z-index: 50; }
-        .ctrl-btn { width: 80px; height: 80px; border-radius: 50%; border: 4px solid #fff; background: rgba(255,107,107,0.8); color: #fff; font-size: 32px; cursor: pointer; box-shadow: 0 4px 0 rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; user-select: none; }
-        .ctrl-btn:active { transform: translateY(4px); box-shadow: 0 0 0 rgba(0,0,0,0.3); }
-        * { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-    </style>
 </head>
 <body>
     <div class="tamagotchi">
         <div class="screen"><canvas id="gameCanvas"></canvas><div class="scanlines"></div></div>
-        <div class="controls"><button class="ctrl-btn" id="btnLeft">⬅️</button><button class="ctrl-btn" id="btnRight">➡️</button></div>
+        <!-- ✅ Кнопки по краям экрана -->
+        <div class="controls">
+            <button class="ctrl-btn btn-a" id="btnLeft">⬅️</button>
+            <button class="ctrl-btn btn-b" id="btnRight">➡️</button>
+        </div>
         <div class="instructions" id="instructions">ЛОВИ РЫБКИ! КНОПКИ ← →</div>
         <a href="index.html" class="back-btn">⬅ НАЗАД</a>
     </div>
