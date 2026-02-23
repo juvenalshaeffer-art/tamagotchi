@@ -5,20 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>🐱 Котик Тамагочи</title>
     <link rel="stylesheet" href="style.css">
-    
-    <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             if (window.Telegram?.WebApp) {
                 const tg = window.Telegram.WebApp;
-                tg.expand();
-                tg.ready();
+                tg.expand(); tg.ready();
                 if (tg.themeParams) {
                     document.documentElement.style.setProperty('--tg-bg', tg.themeParams.bg_color || '#fff');
                     document.documentElement.style.setProperty('--tg-text', tg.themeParams.text_color || '#000');
                 }
-                console.log('✅ Telegram WebApp инициализирован');
             }
         });
     </script>
@@ -35,7 +31,6 @@
             </div>
             <div class="cat-name" id="catNameDisplay">КОТИК</div>
         </div>
-        
         <div class="buttons">
             <a href="feed.html" class="btn btn-feed" title="Кормить">🍖</a>
             <a href="walk.html" class="btn btn-walk" title="Гулять">🚶</a>
@@ -44,10 +39,7 @@
             <button class="btn btn-sleep" onclick="toggleSleep()" title="Спать">💤</button>
         </div>
     </div>
-
     <script src="game.js"></script>
-    <script>
-        initMainScreen();
-    </script>
+    <script>initMainScreen();</script>
 </body>
 </html>
