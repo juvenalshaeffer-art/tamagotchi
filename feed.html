@@ -12,7 +12,7 @@
             <canvas id="gameCanvas"></canvas>
             <div class="scanlines"></div>
         </div>
-        <div class="instructions" id="instructions">ЛОВИ РЫБКИ СТРЕЛКАМИ ↑↓</div>
+        <div class="instructions" id="instructions">ЛОВИ РЫБКИ СТРЕЛКАМИ ←→</div>
         <a href="index.html" class="back-btn">⬅ НАЗАД</a>
     </div>
 
@@ -24,6 +24,7 @@
         canvas.height = canvas.offsetHeight;
         
         const groundY = canvas.height - 60;
+        let catX = canvas.width / 2 - 35;
         let catY = groundY - 50;
         let foodItems = [];
         let score = 0;
@@ -34,23 +35,82 @@
             document.getElementById('instructions').style.display = 'none';
         }, 4000);
         
-        // Управление
+        // Управление стрелками влево/вправо
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowUp') catY = Math.max(groundY - 150, catY - 30);
-            if (e.key === 'ArrowDown') catY = Math.min(groundY - 50, catY + 30);
+            if (e.key === 'ArrowLeft') catX = Math.max(0, catX - 20);
+            if (e.key === 'ArrowRight') catX = Math.min(canvas.width - 80, catX + 20);
         });
         
+        // 🐱 ПОЛНЫЙ КОТИК (с глазами, лапами, хвостом, усами)
         function drawCat(x, y) {
             ctx.save();
             ctx.translate(x, y);
+            
+            // Хвост
+            const tailWag = Math.sin(frame * 0.2) * 8;
+            ctx.fillStyle = '#A0A0A0';
+            ctx.fillRect(-20, 30 + tailWag, 25, 8);
+            ctx.fillRect(-30, 25 + tailWag, 15, 8);
+            
+            // Задние лапы
+            const legOffset = Math.sin(frame * 0.3) * 8;
+            ctx.fillStyle = '#A0A0A0';
+            ctx.fillRect(5 + legOffset, 48, 8, 12);
+            ctx.fillRect(20 - legOffset, 48, 8, 12);
+            
+            // Тело
             ctx.fillStyle = '#C0C0C0';
             ctx.fillRect(0, 20, 50, 30);
+            ctx.fillStyle = '#A0A0A0';
+            ctx.fillRect(0, 35, 50, 15);
+            
+            // Полоски
+            ctx.fillStyle = '#808080';
+            ctx.fillRect(10, 22, 6, 24);
+            ctx.fillRect(25, 22, 6, 24);
+            ctx.fillRect(40, 22, 6, 24);
+            
+            // Передние лапы
+            ctx.fillStyle = '#A0A0A0';
+            ctx.fillRect(42 + legOffset, 48, 8, 12);
+            ctx.fillRect(55 - legOffset, 48, 8, 12);
+            
+            // Голова
+            ctx.fillStyle = '#C0C0C0';
             ctx.fillRect(40, 5, 32, 26);
-            ctx.fillStyle = '#FFD000';
+            
+            // Уши
+            ctx.fillStyle = '#A0A0A0';
+            ctx.fillRect(42, 0, 10, 10);
+            ctx.fillRect(60, 0, 10, 10);
+            ctx.fillStyle = '#E0E0E0';
+            ctx.fillRect(44, 2, 6, 6);
+            ctx.fillRect(62, 2, 6, 6);
+            
+            // Глаза
+            ctx.fillStyle = '#E0E0E0';
             ctx.fillRect(46, 10, 10, 10);
             ctx.fillRect(62, 10, 10, 10);
+            ctx.fillStyle = '#FFD000';
+            ctx.fillRect(48, 12, 6, 6);
+            ctx.fillRect(64, 12, 6, 6);
+            ctx.fillStyle = '#000';
+            ctx.fillRect(50, 13, 3, 3);
+            ctx.fillRect(66, 13, 3, 3);
+            
+            // Нос
             ctx.fillStyle = '#FF80A0';
             ctx.fillRect(68, 20, 6, 5);
+            
+            // Усы (с обеих сторон)
+            ctx.fillStyle = '#E0E0E0';
+            ctx.fillRect(35, 15, 12, 2);
+            ctx.fillRect(35, 19, 12, 2);
+            ctx.fillRect(35, 23, 12, 2);
+            ctx.fillRect(74, 15, 12, 2);
+            ctx.fillRect(74, 19, 12, 2);
+            ctx.fillRect(74, 23, 12, 2);
+            
             ctx.restore();
         }
         
@@ -65,24 +125,32 @@
             ctx.fillStyle = '#228B22';
             ctx.fillRect(0, groundY, canvas.width, 12);
             
-            // Спавн еды
+            // 🐟 Спавн рыбок СВЕРХУ
             if (Math.random() < 0.02) {
                 foodItems.push({
-                    x: canvas.width,
-                    y: groundY - 50 - Math.random() * 100,
-                    width: 25,
-                    height: 25
+                    x: Math.random() * (canvas.width - 30),
+                    y: -30,
+                    width: 30,
+                    height: 20
                 });
             }
             
-            // Еда (рыбки)
+            // 🐟 Рыбки падают ВНИЗ
             ctx.fillStyle = '#FF6B6B';
             foodItems.forEach((food, i) => {
-                food.x -= 4;
-                ctx.fillRect(food.x, food.y, food.width, food.height);
+                food.y += 3; // Падают вниз
                 
-                // Столкновение
-                if (100 < food.x + food.width && 150 > food.x &&
+                // Рисуем рыбку
+                ctx.fillRect(food.x, food.y, food.width, food.height);
+                // Хвост рыбки
+                ctx.beginPath();
+                ctx.moveTo(food.x, food.y + 10);
+                ctx.lineTo(food.x - 10, food.y + 5);
+                ctx.lineTo(food.x - 10, food.y + 15);
+                ctx.fill();
+                
+                // Столкновение с котиком
+                if (catX < food.x + food.width && catX + 70 > food.x &&
                     catY < food.y + food.height && catY + 50 > food.y) {
                     foodItems.splice(i, 1);
                     score++;
@@ -90,10 +158,11 @@
                     saveState();
                 }
                 
-                if (food.x < -50) foodItems.splice(i, 1);
+                // Удаление если упала вниз
+                if (food.y > groundY) foodItems.splice(i, 1);
             });
             
-            drawCat(100, catY);
+            drawCat(catX, catY);
             
             ctx.fillStyle = '#FFFF00';
             ctx.font = '10px "Press Start 2P"';
