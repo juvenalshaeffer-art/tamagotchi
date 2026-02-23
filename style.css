@@ -1,92 +1,110 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>💚 Лечение - Тамагочи</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            if (window.Telegram?.WebApp) { window.Telegram.WebApp.expand(); window.Telegram.WebApp.ready(); }
-        });
-    </script>
-</head>
-<body>
-    <div class="tamagotchi">
-        <div class="screen"><canvas id="gameCanvas"></canvas><div class="scanlines"></div></div>
-        <div class="instructions" id="instructions">КЛИКАЙ НА ТАБЛЕТКИ!</div>
-        <a href="index.html" class="back-btn">⬅ НАЗАД</a>
-    </div>
-    <script src="game.js"></script>
-    <script>
-        const canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
-        canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
-        let healTargets = [], score = 0, frame = 0;
-        document.getElementById('instructions').style.display = 'block';
-        setTimeout(() => { document.getElementById('instructions').style.display = 'none'; }, 4000);
-        for (let i = 0; i < 6; i++) {
-            const type = Math.random() > 0.5 ? 'capsule' : 'pill';
-            healTargets.push({ x: 150 + Math.random() * 200, y: 100 + Math.random() * 200, type: type, width: type === 'capsule' ? 35 : 25, height: type === 'capsule' ? 15 : 25, healed: false, rotation: Math.random() * Math.PI });
-        }
-        canvas.addEventListener('click', (e) => {
-            const rect = canvas.getBoundingClientRect(), x = e.clientX - rect.left, y = e.clientY - rect.top;
-            healTargets.forEach(target => {
-                if (!target.healed) {
-                    const dist = Math.sqrt((x - target.x) ** 2 + (y - target.y) ** 2);
-                    if (dist < target.width + 10) {
-                        target.healed = true; score++;
-                        ctx.fillStyle = 'rgba(0, 255, 0, 0.3)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                        if (score >= 6) { catState.health = Math.min(100, catState.health + 30); saveState(); window.location.href = 'index.html'; }
-                    }
-                }
-            });
-        });
-        function drawCat(x, y) {
-            ctx.save(); ctx.translate(x, y);
-            const tailWag = Math.sin(frame * 0.2) * 8; ctx.fillStyle = '#A0A0A0'; ctx.fillRect(-20, 30 + tailWag, 25, 8); ctx.fillRect(-30, 25 + tailWag, 15, 8);
-            const legOffset = Math.sin(frame * 0.3) * 8; ctx.fillStyle = '#A0A0A0'; ctx.fillRect(5 + legOffset, 48, 8, 12); ctx.fillRect(20 - legOffset, 48, 8, 12);
-            ctx.fillStyle = '#C0C0C0'; ctx.fillRect(0, 20, 50, 30); ctx.fillStyle = '#A0A0A0'; ctx.fillRect(0, 35, 50, 15);
-            ctx.fillStyle = '#808080'; ctx.fillRect(10, 22, 6, 24); ctx.fillRect(25, 22, 6, 24); ctx.fillRect(40, 22, 6, 24);
-            ctx.fillStyle = '#A0A0A0'; ctx.fillRect(42 + legOffset, 48, 8, 12); ctx.fillRect(55 - legOffset, 48, 8, 12);
-            ctx.fillStyle = '#C0C0C0'; ctx.fillRect(40, 5, 32, 26); ctx.fillStyle = '#A0A0A0'; ctx.fillRect(42, 0, 10, 10); ctx.fillRect(60, 0, 10, 10);
-            ctx.fillStyle = '#E0E0E0'; ctx.fillRect(44, 2, 6, 6); ctx.fillRect(62, 2, 6, 6);
-            ctx.fillStyle = '#E0E0E0'; ctx.fillRect(46, 10, 10, 10); ctx.fillRect(62, 10, 10, 10);
-            ctx.fillStyle = '#FFD000'; ctx.fillRect(48, 12, 6, 6); ctx.fillRect(64, 12, 6, 6);
-            ctx.fillStyle = '#000'; ctx.fillRect(50, 13, 3, 3); ctx.fillRect(66, 13, 3, 3);
-            ctx.fillStyle = '#FF80A0'; ctx.fillRect(68, 20, 6, 5);
-            ctx.fillStyle = '#E0E0E0'; ctx.fillRect(35, 15, 12, 2); ctx.fillRect(35, 19, 12, 2); ctx.fillRect(35, 23, 12, 2); ctx.fillRect(74, 15, 12, 2); ctx.fillRect(74, 19, 12, 2); ctx.fillRect(74, 23, 12, 2);
-            ctx.restore();
-        }
-        function drawPill(target) {
-            if (target.healed) return; ctx.save(); ctx.translate(target.x, target.y); ctx.rotate(target.rotation);
-            if (target.type === 'capsule') {
-                ctx.fillStyle = '#FF6B6B'; ctx.fillRect(-target.width/2, -target.height/2, target.width/2, target.height);
-                ctx.fillStyle = '#4ECDC4'; ctx.fillRect(0, -target.height/2, target.width/2, target.height);
-                ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2; ctx.strokeRect(-target.width/2, -target.height/2, target.width, target.height);
-                ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fillRect(-target.width/2 + 3, -target.height/2 + 2, 8, 4);
-            } else {
-                ctx.fillStyle = '#95E1D3'; ctx.beginPath(); ctx.arc(0, 0, target.height/2, 0, Math.PI * 2); ctx.fill();
-                ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2; ctx.stroke();
-                ctx.strokeStyle = '#FF6B6B'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-8, -8); ctx.lineTo(8, 8); ctx.moveTo(8, -8); ctx.lineTo(-8, 8); ctx.stroke();
-                ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.beginPath(); ctx.arc(-5, -5, 4, 0, Math.PI * 2); ctx.fill();
-            }
-            ctx.restore();
-        }
-        function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#E8F4F8'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.strokeStyle = '#B8D8E0'; ctx.lineWidth = 1;
-            for (let i = 0; i < canvas.width; i += 40) for (let j = 0; j < canvas.height; j += 40) ctx.strokeRect(i, j, 40, 40);
-            healTargets.forEach(target => { drawPill(target); });
-            drawCat(100, 150);
-            ctx.fillStyle = '#FFFF00'; ctx.font = '10px "Press Start 2P"'; ctx.fillText('ВЫЛЕЧЕНО: ' + score + '/6', 10, 30);
-            ctx.fillStyle = '#333'; ctx.fillRect(10, 45, 150, 10);
-            ctx.fillStyle = '#00FF00'; ctx.fillRect(10, 45, (score / 6) * 150, 10);
-            ctx.strokeStyle = '#FFF'; ctx.lineWidth = 2; ctx.strokeRect(10, 45, 150, 10);
-            frame++; requestAnimationFrame(animate);
-        }
-        animate();
-    </script>
-</body>
-</html>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background: #000;
+    font-family: 'Press Start 2P', cursive;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; overflow: hidden;
+}
+
+.tamagotchi {
+    width: 100%; max-width: 500px; height: 100vh; max-height: 700px;
+    background: linear-gradient(180deg, #FF6B9D, #FFB3C6);
+    border-radius: 30px; padding: 20px;
+    display: flex; flex-direction: column; align-items: center;
+    position: relative;
+}
+
+.screen {
+    width: 100%; height: 60%;
+    background: #9EA792; border-radius: 15px;
+    border: 8px solid #4a4a4a;
+    position: relative; overflow: hidden;
+}
+
+#mainCanvas, #gameCanvas {
+    width: 100%; height: 100%;
+    image-rendering: pixelated;
+}
+
+.stats-overlay {
+    position: absolute; top: 10px; left: 10px;
+    background: rgba(0,0,0,0.7); padding: 8px;
+    border-radius: 5px; font-size: 8px; color: #fff;
+}
+
+.stat { display: flex; align-items: center; margin: 3px 0; gap: 5px; }
+.bar { width: 70px; height: 8px; background: #333; border: 2px solid #fff; border-radius: 3px; }
+.fill { height: 100%; background: #00FF00; transition: width 0.3s; }
+
+.buttons {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 10px; margin-top: 15px; width: 95%;
+}
+
+.btn {
+    width: 55px; height: 55px; border-radius: 50%;
+    border: 3px solid #fff; font-size: 22px;
+    cursor: pointer; text-decoration: none;
+    display: flex; align-items: center; justify-content: center;
+    background: #fff; margin: 0 auto;
+}
+
+.btn-feed { border-color: #FF6B6B; background: #FFB3B3; }
+.btn-walk { border-color: #4ECDC4; background: #B3E5E0; }
+.btn-play { border-color: #95E1D3; background: #C8F0E8; }
+.btn-heal { border-color: #FFD93D; background: #FFEAA7; }
+.btn-sleep { border-color: #A8E6CF; background: #D5F5E6; }
+
+.cat-name {
+    position: absolute; top: 10px; right: 10px;
+    background: rgba(255,255,255,0.9); padding: 5px 12px;
+    border-radius: 5px; font-size: 9px; border: 2px solid #FF6B9D;
+}
+
+.scanlines {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 2px, transparent 2px, transparent 4px);
+    pointer-events: none; z-index: 100; opacity: 0.5;
+}
+
+.back-btn {
+    position: absolute; bottom: 15px; left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 25px; background: #FF6B9D;
+    border: 3px solid #fff; border-radius: 15px;
+    color: #fff; font-family: 'Press Start 2P', cursive;
+    font-size: 10px; cursor: pointer; text-decoration: none;
+}
+
+.instructions {
+    position: absolute; bottom: 120px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.9); color: #FFFF00;
+    padding: 8px 15px; border-radius: 8px;
+    font-size: 7px; text-align: center;
+    border: 2px solid #FFFF00; display: none; z-index: 20;
+}
+
+.controls {
+    position: absolute; bottom: 25px; left: 0; right: 0;
+    display: flex; justify-content: space-between;
+    padding: 0 15px; z-index: 50; pointer-events: none;
+}
+
+.ctrl-btn {
+    width: 90px; height: 90px; border-radius: 50%;
+    border: 4px solid #fff; color: #fff;
+    font-size: 32px; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    user-select: none; font-family: 'Press Start 2P', cursive;
+    pointer-events: auto;
+}
+
+.btn-a { background: #4ECDC4; }
+.btn-b { background: #FFD93D; color: #000; }
+.btn-label { font-size: 9px; margin-top: 2px; }
+
+* { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
