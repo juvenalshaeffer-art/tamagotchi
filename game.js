@@ -11,7 +11,7 @@ let catState = {
 let mainScreenState = {
     catX: 200,
     catY: 0,
-    action: 'idle',  // idle, walking, sleeping, window
+    action: 'idle',
     targetX: 200,
     isSleeping: false,
     sleepTimer: 0,
@@ -48,7 +48,7 @@ function toggleSleep() {
     mainScreenState.isSleeping = !mainScreenState.isSleeping;
     if (mainScreenState.isSleeping) {
         mainScreenState.action = 'sleeping';
-        mainScreenState.targetX = 150;  // Диван
+        mainScreenState.targetX = 180;
     } else {
         mainScreenState.action = 'idle';
     }
@@ -64,7 +64,6 @@ setInterval(() => {
             catState.health = Math.max(0, catState.health - 0.2);
         }
     } else {
-        // Во сне восстанавливается энергия
         catState.energy = Math.min(100, catState.energy + 0.5);
         catState.hunger = Math.max(0, catState.hunger - 0.1);
     }
@@ -102,22 +101,37 @@ function initMainScreen() {
     let frame = 0;
     const groundY = canvas.height - 60;
     
-    // Объекты комнаты
-    const sofa = { x: 100, y: groundY - 50, width: 120, height: 50 };
-    const window = { x: canvas.width - 150, y: groundY - 120, width: 100, height: 120 };
-    const table = { x: canvas.width - 280, y: groundY - 40, width: 80, height: 40 };
+    // ✅ ИСПРАВЛЕННЫЕ РАЗМЕРЫ ОБЪЕКТОВ
+    const sofa = { 
+        x: 80, 
+        y: groundY - 70,    // ✅ Диван стоит на полу (70px высота)
+        width: 180,          // ✅ Диван больше (было 120)
+        height: 70           // ✅ Диван выше (было 50)
+    };
     
-    // Автоматическое движение котика
+    const window = { 
+        x: canvas.width - 180, 
+        y: 80,               // ✅ Окно на стене (было groundY - 120 = на полу)
+        width: 120,          // ✅ Окно больше
+        height: 140          // ✅ Окно выше
+    };
+    
+    const table = { 
+        x: canvas.width - 320, 
+        y: groundY - 50, 
+        width: 90, 
+        height: 50 
+    };
+    
     let autoMoveTimer = 0;
     let currentTarget = 'none';
     
     function updateCatMovement() {
         if (mainScreenState.isSleeping) {
             mainScreenState.action = 'sleeping';
-            mainScreenState.targetX = sofa.x + 30;
+            mainScreenState.targetX = sofa.x + 50;
         }
         
-        // Движение к цели
         const dx = mainScreenState.targetX - mainScreenState.catX;
         if (Math.abs(dx) > 5) {
             mainScreenState.catX += dx * 0.03;
@@ -127,35 +141,29 @@ function initMainScreen() {
             mainScreenState.action = 'idle';
         }
         
-        // Автоматический выбор действия
         autoMoveTimer++;
         if (autoMoveTimer > 200 && !mainScreenState.isSleeping) {
             autoMoveTimer = 0;
             const rand = Math.random();
             
             if (rand < 0.3 && catState.energy < 50) {
-                // Идти спать на диван
                 currentTarget = 'sofa';
-                mainScreenState.targetX = sofa.x + 30;
+                mainScreenState.targetX = sofa.x + 50;
                 mainScreenState.action = 'walking';
             } else if (rand < 0.6 && catState.happiness < 60) {
-                // Идти к окну
                 currentTarget = 'window';
-                mainScreenState.targetX = window.x + 20;
+                mainScreenState.targetX = window.x + 30;
                 mainScreenState.action = 'walking';
             } else if (rand < 0.8) {
-                // Идти к столу
                 currentTarget = 'table';
-                mainScreenState.targetX = table.x - 50;
+                mainScreenState.targetX = table.x - 60;
                 mainScreenState.action = 'walking';
             } else {
-                // Просто ходить
                 currentTarget = 'random';
-                mainScreenState.targetX = 150 + Math.random() * (canvas.width - 300);
+                mainScreenState.targetX = 150 + Math.random() * (canvas.width - 350);
             }
         }
         
-        // Проверка достижения цели
         if (Math.abs(dx) < 10) {
             if (currentTarget === 'sofa' && !mainScreenState.isSleeping) {
                 mainScreenState.action = 'sleeping';
@@ -167,11 +175,10 @@ function initMainScreen() {
             }
         }
         
-        // Y позиция (на диване или подоконнике)
         if (mainScreenState.action === 'sleeping') {
             mainScreenState.catY = sofa.y - 20;
         } else if (mainScreenState.action === 'window') {
-            mainScreenState.catY = window.y + 80;
+            mainScreenState.catY = window.y + window.height - 20;
         } else {
             mainScreenState.catY = groundY - 50;
         }
@@ -193,15 +200,15 @@ function initMainScreen() {
             ctx.fillRect(i, groundY + 10, 35, 5);
         }
         
-        // 🪟 Окно
+        // 🪟 Окно (ИСПРАВЛЕНО - на стене)
         ctx.fillStyle = COLORS.windowFrame;
         ctx.fillRect(window.x, window.y, window.width, window.height);
         ctx.fillStyle = COLORS.window;
-        ctx.fillRect(window.x + 8, window.y + 8, window.width - 16, window.height - 16);
+        ctx.fillRect(window.x + 10, window.y + 10, window.width - 20, window.height - 20);
         
         // Рама окна
         ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 4;
         ctx.beginPath();
         ctx.moveTo(window.x + window.width/2, window.y);
         ctx.lineTo(window.x + window.width/2, window.y + window.height);
@@ -211,40 +218,44 @@ function initMainScreen() {
         
         // Подоконник
         ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(window.x - 10, window.y + window.height - 10, window.width + 20, 15);
+        ctx.fillRect(window.x - 15, window.y + window.height - 8, window.width + 30, 15);
         
-        // 🛋️ Диван
+        // 🛋️ Диван (ИСПРАВЛЕНО - больше)
         ctx.fillStyle = COLORS.sofa;
         ctx.fillRect(sofa.x, sofa.y, sofa.width, sofa.height);
         ctx.fillStyle = COLORS.sofaLight;
-        ctx.fillRect(sofa.x + 10, sofa.y + 10, sofa.width - 20, sofa.height - 20);
+        ctx.fillRect(sofa.x + 15, sofa.y + 15, sofa.width - 30, sofa.height - 25);
         
         // Подушки на диване
         ctx.fillStyle = '#DC143C';
-        ctx.fillRect(sofa.x + 20, sofa.y + 5, 35, 30);
-        ctx.fillRect(sofa.x + 65, sofa.y + 5, 35, 30);
+        ctx.fillRect(sofa.x + 25, sofa.y + 10, 45, 35);
+        ctx.fillRect(sofa.x + 80, sofa.y + 10, 45, 35);
+        
+        // Спинка дивана
+        ctx.fillStyle = '#A52A2A';
+        ctx.fillRect(sofa.x, sofa.y - 20, sofa.width, 25);
         
         // Ножки дивана
         ctx.fillStyle = '#4A0000';
-        ctx.fillRect(sofa.x + 10, sofa.y + sofa.height - 10, 15, 10);
-        ctx.fillRect(sofa.x + sofa.width - 25, sofa.y + sofa.height - 10, 15, 10);
+        ctx.fillRect(sofa.x + 15, sofa.y + sofa.height - 8, 20, 8);
+        ctx.fillRect(sofa.x + sofa.width - 35, sofa.y + sofa.height - 8, 20, 8);
         
         // 🪑 Столик
         ctx.fillStyle = COLORS.table;
         ctx.fillRect(table.x, table.y, table.width, table.height);
         ctx.fillStyle = '#8B6914';
-        ctx.fillRect(table.x + 5, table.y + 5, table.width - 10, 10);
+        ctx.fillRect(table.x + 8, table.y + 8, table.width - 16, 12);
         
         // Ножки стола
         ctx.fillStyle = '#4A3010';
-        ctx.fillRect(table.x + 10, table.y + table.height, 10, 20);
-        ctx.fillRect(table.x + table.width - 20, table.y + table.height, 10, 20);
+        ctx.fillRect(table.x + 15, table.y + table.height, 12, 25);
+        ctx.fillRect(table.x + table.width - 27, table.y + table.height, 12, 25);
         
         // Чашка на столе
         ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(table.x + 30, table.y - 15, 20, 18);
+        ctx.fillRect(table.x + 35, table.y - 18, 22, 20);
         ctx.fillStyle = '#8B4513';
-        ctx.fillRect(table.x + 45, table.y - 12, 8, 12);
+        ctx.fillRect(table.x + 52, table.y - 15, 10, 14);
     }
     
     function drawCat(x, y, direction, action) {
@@ -257,7 +268,6 @@ function initMainScreen() {
         }
         
         if (action === 'sleeping') {
-            // 😴 Спящий котик (свёрнулся клубком)
             ctx.fillStyle = COLORS.cat2;
             ctx.beginPath();
             ctx.ellipse(35, 35, 30, 25, 0, 0, Math.PI * 2);
@@ -268,7 +278,6 @@ function initMainScreen() {
             ctx.arc(55, 30, 15, 0, Math.PI * 2);
             ctx.fill();
             
-            // Закрытые глаза
             ctx.strokeStyle = '#000';
             ctx.lineWidth = 2;
             ctx.beginPath();
@@ -278,14 +287,12 @@ function initMainScreen() {
             ctx.lineTo(70, 28);
             ctx.stroke();
             
-            // Zzz
             ctx.fillStyle = '#87CEEB';
             ctx.font = '12px "Press Start 2P"';
             ctx.fillText('Z', 40 + Math.sin(frame * 0.1) * 3, 10 - Math.cos(frame * 0.1) * 5);
             ctx.fillText('z', 35 + Math.sin(frame * 0.15) * 3, 5 - Math.cos(frame * 0.15) * 5);
             
         } else if (action === 'window') {
-            // 🪟 Котик на подоконнике смотрит в окно
             ctx.fillStyle = COLORS.cat2;
             ctx.fillRect(0, 20, 50, 30);
             ctx.fillStyle = COLORS.cat1;
@@ -306,7 +313,6 @@ function initMainScreen() {
             ctx.fillRect(44, 2, 6, 6);
             ctx.fillRect(62, 2, 6, 6);
             
-            // Глаза смотрят в окно
             ctx.fillStyle = COLORS.catLight;
             ctx.fillRect(46, 10, 10, 10);
             ctx.fillRect(62, 10, 10, 10);
@@ -320,13 +326,11 @@ function initMainScreen() {
             ctx.fillStyle = COLORS.catNose;
             ctx.fillRect(68, 20, 6, 5);
             
-            // Хвост свисает с подоконника
             const tailWag = Math.sin(frame * 0.1) * 5;
             ctx.fillStyle = COLORS.cat2;
             ctx.fillRect(-20, 35 + tailWag, 25, 8);
             
         } else {
-            // 🐱 Обычный котик
             const tailWag = action === 'walking' ? Math.sin(frame * 0.3) * 10 : Math.sin(frame * 0.2) * 8;
             ctx.fillStyle = COLORS.cat2;
             ctx.fillRect(-20, 30 + tailWag, 25, 8);
