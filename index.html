@@ -3,404 +3,681 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🐾 Тамагочи</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <title>Котик Тамагочи - Sega Style</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-user-select: none; user-select: none; }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
-            background: var(--tg-theme-bg-color, #f5f5f5); 
-            color: var(--tg-theme-text-color, #000); 
-            min-height: 100vh; 
-            padding: 16px; 
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; }
+        body {
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; background: #000;
+            font-family: 'Press Start 2P', cursive; overflow: hidden;
         }
-        .container { max-width: 400px; margin: 0 auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .pet-name { font-size: 24px; font-weight: bold; }
-        .pet-level { background: var(--tg-theme-button-color, #3390ec); color: var(--tg-theme-button-text-color, #fff); padding: 4px 12px; border-radius: 16px; font-size: 14px; }
-        .pet-container { background: var(--tg-theme-secondary-bg-color, #fff); border-radius: 20px; padding: 30px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .pet-avatar { width: 150px; height: 150px; margin: 0 auto 20px; border-radius: 50%; overflow: hidden; background: transparent; display: flex; align-items: center; justify-content: center; }
-        .pet-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-        .pet-avatar.animate img { animation: bounce 2s infinite; }
-        .pet-status { font-size: 18px; color: var(--tg-theme-hint-color, #999); }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-        .stat-card { background: var(--tg-theme-secondary-bg-color, #fff); border-radius: 12px; padding: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-        .stat-label { font-size: 12px; color: var(--tg-theme-hint-color, #999); margin-bottom: 6px; }
-        .stat-bar { height: 8px; background: var(--tg-theme-bg-color, #f0f0f0); border-radius: 4px; overflow: hidden; }
-        .stat-fill { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
-        .stat-fill.hunger { background: #4CAF50; }
-        .stat-fill.energy { background: #2196F3; }
-        .stat-fill.mood { background: #FF9800; }
-        .stat-fill.hygiene { background: #9C27B0; }
-        .stat-value { font-size: 14px; font-weight: bold; margin-top: 4px; }
-        .actions-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
-        .action-btn { background: var(--tg-theme-secondary-bg-color, #fff); border: 2px solid var(--tg-theme-button-color, #3390ec); color: var(--tg-theme-button-color, #3390ec); padding: 16px 8px; border-radius: 12px; font-size: 24px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; }
-        .action-btn:active { transform: scale(0.95); background: var(--tg-theme-button-color, #3390ec); color: var(--tg-theme-button-text-color, #fff); }
-        .action-label { font-size: 12px; margin-top: 4px; }
-        .nav-bar { display: flex; justify-content: space-around; background: var(--tg-theme-secondary-bg-color, #fff); border-radius: 16px; padding: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .nav-item { display: flex; flex-direction: column; align-items: center; padding: 8px 16px; border-radius: 12px; cursor: pointer; color: var(--tg-theme-hint-color, #999); }
-        .nav-item.active { background: var(--tg-theme-button-color, #3390ec); color: var(--tg-theme-button-text-color, #fff); }
-        .nav-icon { font-size: 20px; margin-bottom: 4px; }
-        .nav-label { font-size: 11px; }
-        .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--tg-theme-button-color, #3390ec); color: var(--tg-theme-button-text-color, #fff); padding: 12px 24px; border-radius: 24px; font-size: 14px; opacity: 0; transition: all 0.3s; z-index: 1000; }
-        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 2000; }
-        .modal-overlay.show { display: flex; }
-        .modal { background: var(--tg-theme-secondary-bg-color, #fff); border-radius: 20px; padding: 24px; width: 90%; max-width: 320px; text-align: center; }
-        .modal-title { font-size: 20px; font-weight: bold; margin-bottom: 16px; }
-        .modal-body { margin-bottom: 20px; color: var(--tg-theme-hint-color, #999); }
-        .modal-btn { background: var(--tg-theme-button-color, #3390ec); color: var(--tg-theme-button-text-color, #fff); border: none; padding: 12px 32px; border-radius: 12px; font-size: 16px; cursor: pointer; width: 100%; }
-        .info-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--tg-theme-bg-color, #f0f0f0); }
-        .info-label { color: var(--tg-theme-hint-color, #999); }
-        .info-value { font-weight: bold; }
-        .save-status { position: fixed; top: 10px; right: 10px; background: #4CAF50; color: #fff; padding: 4px 12px; border-radius: 12px; font-size: 11px; opacity: 0; transition: opacity 0.3s; z-index: 1000; }
-        .save-status.show { opacity: 1; }
-        .user-badge { 
-            position: fixed; 
-            top: 10px; 
-            left: 10px; 
-            background: var(--tg-theme-secondary-bg-color, #fff); 
-            padding: 4px 10px; 
-            border-radius: 12px; 
-            font-size: 11px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        #gameContainer { 
+            position: relative; width: 100%; max-width: 800px; height: 100vh;
+            background: linear-gradient(180deg, #1a1a4e 0%, #0a0a2e 100%);
+            border: 8px solid #4a4a4a;
+        }
+        #gameCanvas { display: block; width: 100%; height: 100%; }
+        
+        .sega-button {
+            position: absolute;
+            padding: 15px 20px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 11px;
+            border: 4px solid;
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.5);
+        }
+        .sega-button:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 rgba(0,0,0,0.5);
+        }
+        .btn-feed { background: #FF6B6B; border-color: #FF0000; color: #fff; bottom: 80px; left: 10px; }
+        .btn-walk { background: #4ECDC4; border-color: #00FFFF; color: #000; bottom: 80px; left: 50%; transform: translateX(-50%); }
+        .btn-play { background: #95E1D3; border-color: #00FF00; color: #000; bottom: 20px; left: 10px; }
+        .btn-heal { background: #FFD93D; border-color: #FFA500; color: #000; bottom: 20px; left: 50%; transform: translateX(-50%); }
+        .btn-name { background: #A8E6CF; border-color: #00FF00; color: #000; bottom: 20px; right: 10px; }
+        
+        #scanlines {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15) 0px, rgba(0,0,0,0.15) 2px, transparent 2px, transparent 4px);
+            pointer-events: none; z-index: 100; opacity: 0.6;
+        }
+        
+        .modal {
+            display: none; position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(180deg, #2a2a6e 0%, #1a1a4e 100%);
+            border: 6px solid #00FFFF; padding: 30px;
+            box-shadow: 0 0 30px rgba(0,255,255,0.5);
+            z-index: 200; text-align: center;
+        }
+        .modal h2 { color: #FFFF00; margin-bottom: 20px; font-size: 18px; }
+        .modal input {
+            font-family: 'Press Start 2P', cursive;
+            padding: 10px; font-size: 14px;
+            border: 4px solid #FFD93D;
+            background: #000; color: #00FF00;
+            margin-bottom: 20px; width: 100%;
+        }
+        .modal button {
+            font-family: 'Press Start 2P', cursive;
+            padding: 12px 25px; font-size: 12px;
+            background: #00FF00; border: 4px solid #008000;
+            cursor: pointer; color: #000;
+        }
+        
+        .stats {
+            position: absolute; top: 20px; left: 20px;
+            background: rgba(0,0,0,0.8);
+            border: 4px solid #FFD93D;
+            padding: 15px; color: #fff;
+            font-size: 9px; line-height: 2.2;
+            z-index: 50;
+        }
+        .stat-bar {
+            width: 120px; height: 14px;
+            background: #333; border: 2px solid #fff;
+            display: inline-block; margin-left: 10px;
+        }
+        .stat-fill {
+            height: 100%; background: #00FF00;
+            transition: width 0.3s;
+        }
+        
+        #vignette {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.4) 100%);
+            pointer-events: none; z-index: 101;
+        }
+
+        .instructions {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.9);
+            border: 3px solid #FFFF00;
+            padding: 10px 20px;
+            color: #FFFF00;
+            font-size: 9px;
+            text-align: center;
+            z-index: 50;
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div class="save-status" id="saveStatus">💾 Сохранено</div>
-    <div class="user-badge" id="userBadge">👤 Гость</div>
-    
-    <div class="container">
-        <div class="header">
-            <div class="pet-name" id="petName">Пушок</div>
-            <div class="pet-level">LVL <span id="petLevel">1</span></div>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        <div id="scanlines"></div>
+        <div id="vignette"></div>
+        
+        <div class="stats">
+            <div>🍖 ГОЛОД: <div class="stat-bar"><div class="stat-fill" id="hungerBar" style="width: 80%"></div></div></div>
+            <div>😊 СЧАСТЬЕ: <div class="stat-bar"><div class="stat-fill" id="happyBar" style="width: 80%"></div></div></div>
+            <div>💚 ЗДОРОВЬЕ: <div class="stat-bar"><div class="stat-fill" id="healthBar" style="width: 100%"></div></div></div>
+            <div>⚡ ЭНЕРГИЯ: <div class="stat-bar"><div class="stat-fill" id="energyBar" style="width: 100%"></div></div></div>
+            <div style="margin-top: 10px; color: #FFD93D;">🐱 ИМЯ: <span id="catName">КОТИК</span></div>
         </div>
-        <div class="pet-container">
-            <div class="pet-avatar" id="petAvatar">
-                <img id="petImage" src="" alt="pet">
-            </div>
-            <div class="pet-status" id="petStatus">Счастлив и доволен! 😊</div>
-        </div>
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">🍖 Сытость</div>
-                <div class="stat-bar"><div class="stat-fill hunger" id="hungerBar" style="width: 80%"></div></div>
-                <div class="stat-value" id="hungerValue">80/100</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">⚡ Энергия</div>
-                <div class="stat-bar"><div class="stat-fill energy" id="energyBar" style="width: 60%"></div></div>
-                <div class="stat-value" id="energyValue">60/100</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">😊 Настроение</div>
-                <div class="stat-bar"><div class="stat-fill mood" id="moodBar" style="width: 75%"></div></div>
-                <div class="stat-value" id="moodValue">75/100</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">🛁 Гигиена</div>
-                <div class="stat-bar"><div class="stat-fill hygiene" id="hygieneBar" style="width: 90%"></div></div>
-                <div class="stat-value" id="hygieneValue">90/100</div>
-            </div>
-        </div>
-        <div class="actions-grid">
-            <button class="action-btn" onclick="handleAction('feed')" id="btnFeed"><span>🍎</span><div class="action-label">Покормить</div></button>
-            <button class="action-btn" onclick="handleAction('toilet')" id="btnToilet"><span>🚽</span><div class="action-label">Туалет</div></button>
-            <button class="action-btn" onclick="handleAction('walk')" id="btnWalk"><span>🎾</span><div class="action-label">Прогулка</div></button>
-            <button class="action-btn" onclick="handleAction('sleep')" id="btnSleep"><span>😴</span><div class="action-label">Сон</div></button>
-            <button class="action-btn" onclick="handleAction('heal')" id="btnHeal"><span>💊</span><div class="action-label">Лечение</div></button>
-            <button class="action-btn" onclick="handleAction('play')" id="btnPlay"><span>🎮</span><div class="action-label">Игра</div></button>
-        </div>
-        <div class="stat-card" style="margin-bottom: 20px;">
-            <div class="info-row"><span class="info-label">Возраст</span><span class="info-value" id="petAge">5 дней</span></div>
-            <div class="info-row"><span class="info-label">Характер</span><span class="info-value" id="petCharacter">Игривый</span></div>
-            <div class="info-row"><span class="info-label">Опыт</span><span class="info-value" id="petXP">245 / 500 XP</span></div>
+
+        <div class="instructions" id="instructions">
+            <div id="instructionText"></div>
         </div>
         
-        <!-- НАВИГАЦИЯ -->
-        <div class="nav-bar">
-            <div class="nav-item active" onclick="navigate('home')"><div class="nav-icon">🏠</div><div class="nav-label">Дом</div></div>
-            <div class="nav-item" onclick="navigate('walk')"><div class="nav-icon">🌳</div><div class="nav-label">Прогулка</div></div>
-            <div class="nav-item" onclick="navigate('inventory')"><div class="nav-icon">🎒</div><div class="nav-label">Вещи</div></div>
-            <div class="nav-item" onclick="navigate('album')"><div class="nav-icon">📸</div><div class="nav-label">Альбом</div></div>
-        </div>
-    </div>
-    <div class="toast" id="toast"></div>
-    <div class="modal-overlay" id="modalOverlay">
-        <div class="modal">
-            <div class="modal-title" id="modalTitle">Внимание!</div>
-            <div class="modal-body" id="modalBody">Текст сообщения</div>
-            <button class="modal-btn" onclick="closeModal()">OK</button>
+        <button class="sega-button btn-feed" onclick="startFeedGame()">🍖 КОРМИТЬ</button>
+        <button class="sega-button btn-walk" onclick="startWalkGame()">🚶 ГУЛЯТЬ</button>
+        <button class="sega-button btn-play" onclick="startPlayGame()">🎮 ИГРАТЬ</button>
+        <button class="sega-button btn-heal" onclick="startHealGame()">💚 ЛЕЧИТЬ</button>
+        <button class="sega-button btn-name" onclick="openNameModal()">✏️ ИМЯ</button>
+        
+        <div class="modal" id="nameModal">
+            <h2>🐱 ВВЕДИ ИМЯ КОТИКА</h2>
+            <input type="text" id="nameInput" maxlength="10" placeholder="КОТИК">
+            <br>
+            <button onclick="saveName()">OK</button>
         </div>
     </div>
 
     <script>
-        // ==================== TELEGRAM INIT ====================
-        const tg = window.Telegram?.WebApp;
-        let userData = { id: Date.now(), first_name: 'Игрок', username: 'player' };
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const instructions = document.getElementById('instructions');
+        const instructionText = document.getElementById('instructionText');
         
-        if (tg) {
-            tg.expand();
-            tg.ready();
-            
-            if (tg.initDataUnsafe?.user) {
-                userData = tg.initDataUnsafe.user;
-                document.getElementById('userBadge').textContent = `👤 ${userData.first_name}`;
-            }
-            
-            // MainButton для сохранения
-            tg.MainButton.setText('💾 СОХРАНИТЬ');
-            tg.MainButton.color = '#3390ec';
-            tg.MainButton.textColor = '#ffffff';
-            tg.MainButton.show();
-            tg.MainButton.onClick(() => {
-                saveGame();
-                tg.showAlert('Игра сохранена! 💾');
-                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-            });
-            
-            // BackButton: возврат на главную страницу main-page
-            tg.BackButton.show();
-            tg.BackButton.onClick(() => {
-                saveGame();
-                window.location.href = 'https://juvenalshaeffer-art.github.io/main-page/';
-            });
-        }
+        const COLORS = {
+            sky1: '#0060A0', sky2: '#0080C0', sky3: '#40A0E0',
+            ground: '#804000', grass: '#00A800',
+            cat1: '#C0C0C0', cat2: '#A0A0A0', cat3: '#808080',
+            catLight: '#E0E0E0', catEye: '#FFD000', catNose: '#FF80A0',
+            tree1: '#008000', tree2: '#00A000', trunk: '#603000',
+            cloud: '#FFFFFF'
+        };
 
-        // ==================== STATE ====================
-        let pet = {
-            id: userData.id,
-            name: 'Пушок',
-            level: 1,
-            age: 5,
-            xp: 245,
-            xpMax: 500,
+        let catState = {
+            name: 'КОТИК',
             hunger: 80,
-            energy: 60,
-            mood: 75,
-            hygiene: 90,
-            character: 'Игривый',
-            status: 'happy',
-            lastUpdate: Date.now()
+            happiness: 80,
+            health: 100,
+            energy: 100
         };
 
-        const catImages = {
-            music: 0, play: 1, play2: 2, singing: 3,
-            sleeping: 4, sleeping2: 5, normal: 6, wink: 7,
-            normal2: 8, happy2: 9, normal3: 10, feed: 11,
-            music2: 12, normal4: 13, sleeping3: 14, happy3: 15
-        };
+        let gameMode = 'main';
+        let frame = 0;
+        let catX = 100;
+        let catY = 0;
+        let catVelocityY = 0;
+        let isJumping = false;
+        let groundY = 0;
 
-        // ==================== UI FUNCTIONS ====================
-        function updateUI() {
-            document.getElementById('hungerBar').style.width = pet.hunger + '%';
-            document.getElementById('hungerValue').textContent = pet.hunger.toFixed(1) + '/100';
-            document.getElementById('energyBar').style.width = pet.energy + '%';
-            document.getElementById('energyValue').textContent = pet.energy.toFixed(1) + '/100';
-            document.getElementById('moodBar').style.width = pet.mood + '%';
-            document.getElementById('moodValue').textContent = pet.mood.toFixed(1) + '/100';
-            document.getElementById('hygieneBar').style.width = pet.hygiene + '%';
-            document.getElementById('hygieneValue').textContent = pet.hygiene.toFixed(1) + '/100';
-            document.getElementById('petName').textContent = pet.name;
-            document.getElementById('petLevel').textContent = pet.level;
-            document.getElementById('petAge').textContent = pet.age + ' дней';
-            document.getElementById('petCharacter').textContent = pet.character;
-            document.getElementById('petXP').textContent = pet.xp + ' / ' + pet.xpMax + ' XP';
-            updatePetAppearance();
+        function resizeCanvas() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            groundY = canvas.height - 60;
         }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
 
-        function updatePetAppearance() {
-            const img = document.getElementById('petImage');
-            const avatar = document.getElementById('petAvatar');
-            const status = document.getElementById('petStatus');
-            
-            if (pet.hunger < 30) { pet.status = 'normal4'; status.textContent = 'Хочет есть... 🍖'; }
-            else if (pet.energy < 20) { pet.status = 'sleeping2'; status.textContent = 'Устал, хочет спать... 😴'; }
-            else if (pet.mood < 40) { pet.status = 'normal4'; status.textContent = 'Грустит... 💔'; }
-            else if (pet.hygiene < 30) { pet.status = 'normal4'; status.textContent = 'Нужно помыться! 🛁'; }
-            else if (pet.mood > 80 && pet.hunger > 60 && pet.energy > 60) { pet.status = Math.random() > 0.5 ? 'happy2' : 'happy3'; status.textContent = 'Счастлив и доволен! 😊'; }
-            else { pet.status = 'normal'; status.textContent = 'Всё хорошо! 😊'; }
-            
-            const imgIndex = catImages[pet.status] !== undefined ? catImages[pet.status] : 6;
-            
-            // 👇 ПОЛНЫЙ URL к картинкам (чтобы грузились из любой папки)
-            img.src = `https://juvenalshaeffer-art.github.io/tamagotchi/part_${imgIndex}.png`;
-            
-            if (pet.energy > 20 && pet.status !== 'sleeping' && pet.status !== 'sleeping2' && pet.status !== 'sleeping3') { 
-                avatar.classList.add('animate'); 
-            } else { 
-                avatar.classList.remove('animate'); 
-            }
-        }
-
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2000);
-        }
-
-        function showSaveStatus() {
-            const status = document.getElementById('saveStatus');
-            status.classList.add('show');
-            setTimeout(() => status.classList.remove('show'), 2000);
-        }
-
-        function showModal(title, body) {
-            document.getElementById('modalTitle').textContent = title;
-            document.getElementById('modalBody').textContent = body;
-            document.getElementById('modalOverlay').classList.add('show');
-        }
-
-        function closeModal() {
-            document.getElementById('modalOverlay').classList.remove('show');
-        }
-
-        // ==================== 🔍 НАВИГАЦИЯ ====================
-        function navigate(page) {
-            document.querySelectorAll('.nav-item').forEach(item => { item.classList.remove('active'); });
-            event.currentTarget.classList.add('active');
-            
-            const pages = {
-                home: { 
-                    icon: '🏠', 
-                    label: 'Дом', 
-                    // 👇 Ссылка на главную хаб-страницу
-                    url: 'https://juvenalshaeffer-art.github.io/main-page/' 
-                },
-                walk: { 
-                    icon: '🌳', 
-                    label: 'Прогулка', 
-                    // 👇 Ссылка на мини-игру Cat Run
-                    url: 'https://juvenalshaeffer-art.github.io/cat-run/' 
-                },
-                inventory: { icon: '🎒', label: 'Вещи', url: null },
-                album: { icon: '📸', label: 'Альбом', url: null }
-            };
-            
-            const pageInfo = pages[page];
-            
-            if (pageInfo.url) {
-                saveGame(); // Сохраняем перед переходом
-                window.location.href = pageInfo.url;
-            } else {
-                showToast(`${pageInfo.icon} ${pageInfo.label} (в разработке)`);
-            }
-        }
-
-        // ==================== SAVE/LOAD ====================
-        async function saveGame() {
-            try {
-                const saveData = { pet: pet, timestamp: new Date().toISOString() };
-                localStorage.setItem(`tamagotchi_save_${userData.id}`, JSON.stringify(saveData));
-                showSaveStatus();
-            } catch (e) { console.error('❌ Ошибка сохранения:', e); }
-        }
-
-        async function loadGame() {
-            try {
-                const saved = localStorage.getItem(`tamagotchi_save_${userData.id}`);
-                if (saved) {
-                    const saveData = JSON.parse(saved);
-                    if (saveData.pet) {
-                        pet = { ...pet, ...saveData.pet };
-                        showToast('Прогресс загружен! ✨');
-                    }
-                }
-            } catch (e) { console.error('❌ Ошибка загрузки:', e); }
-        }
-
-        function saveGameOnExit() { saveGame(); }
-        setInterval(() => { saveGame(); }, 15000);
-
-        // ==================== ACTIONS ====================
-        const actions = {
-            feed: { cooldown: 30000, effect: () => { pet.hunger = Math.min(100, pet.hunger + 20); pet.mood = Math.min(100, pet.mood + 5); pet.xp += 10; showTemporaryStatus('feed', 'Вкусно! 😋'); return 'Вкусно! 😋'; } },
-            toilet: { cooldown: 60000, effect: () => { pet.hygiene = Math.min(100, pet.hygiene + 30); pet.mood = Math.min(100, pet.mood + 10); pet.xp += 5; showTemporaryStatus('wink', 'Чисто и свежо! ✨'); return 'Чисто и свежо! ✨'; } },
-            walk: { cooldown: 120000, effect: () => { pet.energy = Math.max(0, pet.energy - 15); pet.mood = Math.min(100, pet.mood + 25); pet.hunger = Math.max(0, pet.hunger - 10); pet.xp += 20; showTemporaryStatus('music', 'Отличная прогулка! 🌳'); return 'Отличная прогулка! 🌳'; } },
-            sleep: { cooldown: 300000, effect: () => { pet.energy = Math.min(100, pet.energy + 40); pet.hunger = Math.max(0, pet.hunger - 5); pet.xp += 15; showTemporaryStatus('sleeping', 'Выспался! 😴'); return 'Выспался! 😴'; } },
-            heal: { cooldown: 600000, effect: () => { pet.hunger = Math.min(100, pet.hunger + 10); pet.energy = Math.min(100, pet.energy + 10); pet.mood = Math.min(100, pet.mood + 15); pet.xp += 25; showTemporaryStatus('happy2', 'Здоровье улучшилось! 💪'); return 'Здоровье улучшилось! 💪'; } },
-            play: { cooldown: 60000, effect: () => { pet.energy = Math.max(0, pet.energy - 10); pet.mood = Math.min(100, pet.mood + 20); pet.hunger = Math.max(0, pet.hunger - 5); pet.xp += 15; showTemporaryStatus('play', 'Весело! 🎉'); return 'Весело! 🎉'; } }
-        };
-
-        const cooldowns = {};
-        let temporaryStatusTimeout = null;
-
-        function showTemporaryStatus(status, message) {
-            const img = document.getElementById('petImage');
-            const imgIndex = catImages[status] !== undefined ? catImages[status] : 6;
-            
-            // 👇 Тот же полный URL для временных состояний
-            img.src = `https://juvenalshaeffer-art.github.io/tamagotchi/part_${imgIndex}.png`;
-            
-            if (temporaryStatusTimeout) clearTimeout(temporaryStatusTimeout);
-            temporaryStatusTimeout = setTimeout(() => { updatePetAppearance(); saveGame(); }, 2000);
-        }
-
-        function handleAction(actionType) {
-            const action = actions[actionType];
-            if (cooldowns[actionType] && Date.now() < cooldowns[actionType]) {
-                const remaining = Math.ceil((cooldowns[actionType] - Date.now()) / 1000);
-                showToast(`Подождите ${remaining} сек`);
-                return;
-            }
-            if (actionType === 'walk' && pet.energy < 15) { 
-                showModal('Устал', 'Слишком мало энергии для прогулки. Пусть поспит! 😴'); 
-                return; 
-            }
-            
-            // Вибрация при действии
-            if (tg?.HapticFeedback) {
-                tg.HapticFeedback.impactOccurred('light');
-            }
-            
-            const result = action.effect();
-            cooldowns[actionType] = Date.now() + action.cooldown;
-            showToast(result);
-            checkLevelUp();
-            updateUI();
-            saveGame();
-        }
-
-        function checkLevelUp() {
-            if (pet.xp >= pet.xpMax) {
-                pet.level++;
-                pet.xp = 0;
-                pet.xpMax = Math.floor(pet.xpMax * 1.5);
-                showModal('🎉 Уровень повышен!', `Твой питомец достиг уровня ${pet.level}!`);
-                showTemporaryStatus('happy2', 'Ура! 🎉');
-                
-                if (tg?.HapticFeedback) {
-                    tg.HapticFeedback.notificationOccurred('success');
-                }
-            }
-        }
-
-        function startDecay() {
-            setInterval(() => {
-                pet.hunger = Math.max(0, pet.hunger - 1);
-                pet.energy = Math.max(0, pet.energy - 0.5);
-                pet.mood = Math.max(0, pet.mood - 0.8);
-                pet.hygiene = Math.max(0, pet.hygiene - 0.3);
-                pet.hunger = Math.round(pet.hunger * 10) / 10;
-                pet.energy = Math.round(pet.energy * 10) / 10;
-                pet.mood = Math.round(pet.mood * 10) / 10;
-                pet.hygiene = Math.round(pet.hygiene * 10) / 10;
-                updateUI();
-            }, 5000);
-        }
-
-        // ==================== INIT ====================
-        document.addEventListener('DOMContentLoaded', async () => { 
-            await loadGame(); 
-            updateUI(); 
-            startDecay();
-            console.log('🐾 Тамагочи запущен!'); 
-        });
+        // 🍖 МИНИ-ИГРА: КОРМЛЕНИЕ
+        let foodItems = [];
+        let score = 0;
         
-        window.addEventListener('beforeunload', () => { saveGameOnExit(); });
+        function startFeedGame() {
+            gameMode = 'feed';
+            foodItems = [];
+            score = 0;
+            catX = 100;
+            showInstruction('ЛОВИ РЫБКИ СТРЕЛКАМИ ВВЕРХ/ВНИЗ!');
+        }
+
+        function updateFeedGame() {
+            if (Math.random() < 0.02) {
+                foodItems.push({
+                    x: canvas.width,
+                    y: groundY - 50 - Math.random() * 150,
+                    width: 25,
+                    height: 25
+                });
+            }
+
+            foodItems.forEach((food, i) => {
+                food.x -= 5;
+                
+                if (catX < food.x + food.width && catX + 50 > food.x &&
+                    catY < food.y + food.height && catY + 50 > food.y) {
+                    foodItems.splice(i, 1);
+                    score++;
+                    catState.hunger = Math.min(100, catState.hunger + 8);
+                    updateStats();
+                }
+                
+                if (food.x < -50) foodItems.splice(i, 1);
+            });
+        }
+
+        function drawFeedGame() {
+            ctx.fillStyle = '#FF6B6B';
+            foodItems.forEach(food => {
+                ctx.fillRect(food.x, food.y, food.width, food.height);
+                ctx.beginPath();
+                ctx.moveTo(food.x, food.y + 12);
+                ctx.lineTo(food.x - 10, food.y + 5);
+                ctx.lineTo(food.x - 10, food.y + 20);
+                ctx.fill();
+            });
+            
+            ctx.fillStyle = '#FFFF00';
+            ctx.font = '10px "Press Start 2P"';
+            ctx.fillText('СЪЕДЕНО: ' + score, 200, 50);
+        }
+
+        // 🚶 МИНИ-ИГРА: ПРОГУЛКА (прыжки через препятствия)
+        let walkObstacles = [];
+        let walkScore = 0;
+        
+        function startWalkGame() {
+            gameMode = 'walk';
+            walkObstacles = [];
+            walkScore = 0;
+            catX = 100;
+            catY = groundY - 50;
+            catVelocityY = 0;
+            isJumping = false;
+            showInstruction('ПРЫГАЙ ЧЕРЕЗ ПРЕПЯТСТВИЯ (ПРОБЕЛ)!');
+        }
+
+        function updateWalkGame() {
+            catVelocityY += 0.8;
+            catY += catVelocityY;
+            if (catY >= groundY - 50) {
+                catY = groundY - 50;
+                isJumping = false;
+                catVelocityY = 0;
+            }
+
+            if (Math.random() < 0.015) {
+                walkObstacles.push({
+                    x: canvas.width,
+                    y: groundY - 40,
+                    width: 30,
+                    height: 40
+                });
+            }
+
+            walkObstacles.forEach((obs, i) => {
+                obs.x -= 6;
+                
+                if (catX < obs.x + obs.width && catX + 50 > obs.x &&
+                    catY < obs.y + obs.height && catY + 50 > obs.y) {
+                    walkObstacles = [];
+                    catState.energy = Math.max(0, catState.energy - 10);
+                    catState.happiness = Math.min(100, catState.happiness + 10);
+                    updateStats();
+                    gameMode = 'main';
+                    hideInstruction();
+                }
+                
+                if (obs.x < -50) {
+                    walkObstacles.splice(i, 1);
+                    walkScore++;
+                }
+            });
+
+            catState.energy = Math.max(0, catState.energy - 0.05);
+            updateStats();
+        }
+
+        function drawWalkGame() {
+            ctx.fillStyle = '#4ECDC4';
+            walkObstacles.forEach(obs => {
+                ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+            });
+            
+            ctx.fillStyle = '#FFFF00';
+            ctx.font = '10px "Press Start 2P"';
+            ctx.fillText('ПРОЙДЕНО: ' + walkScore, 200, 50);
+        }
+
+        // 🎮 МИНИ-ИГРА: МЯЧИК (пинг-понг)
+        let ball = { x: 0, y: 0, dx: 0, dy: 0, size: 10 };
+        let catPaddle = { x: 50, y: 0, width: 15, height: 60 };
+        let handPaddle = { x: 0, y: 0, width: 15, height: 60 };
+        let playScore = 0;
+        
+        function startPlayGame() {
+            gameMode = 'play';
+            ball = { 
+                x: canvas.width / 2, 
+                y: canvas.height / 2, 
+                dx: 4, 
+                dy: 3, 
+                size: 10 
+            };
+            catPaddle = { x: 80, y: canvas.height / 2 - 30, width: 15, height: 60 };
+            handPaddle = { x: canvas.width - 100, y: canvas.height / 2 - 30, width: 15, height: 60 };
+            playScore = 0;
+            showInstruction('ДВИГАЙ МЫШЬЮ ИЛИ ПАЛЬЦЕМ! ОТБИВАЙ МЯЧ!');
+        }
+
+        function updatePlayGame() {
+            // Движение мяча
+            ball.x += ball.dx;
+            ball.y += ball.dy;
+
+            // Отскок от верха и низа
+            if (ball.y - ball.size < 0 || ball.y + ball.size > canvas.height) {
+                ball.dy = -ball.dy;
+            }
+
+            // Отскок от ракетки котика
+            if (ball.x - ball.size < catPaddle.x + catPaddle.width &&
+                ball.x + ball.size > catPaddle.x &&
+                ball.y > catPaddle.y &&
+                ball.y < catPaddle.y + catPaddle.height) {
+                ball.dx = Math.abs(ball.dx) + 0.5;
+                playScore++;
+            }
+
+            // Отскок от ракетки руки
+            if (ball.x + ball.size > handPaddle.x &&
+                ball.x - ball.size < handPaddle.x + handPaddle.width &&
+                ball.y > handPaddle.y &&
+                ball.y < handPaddle.y + handPaddle.height) {
+                ball.dx = -Math.abs(ball.dx) - 0.5;
+            }
+
+            // ИИ руки
+            const handCenter = handPaddle.y + handPaddle.height / 2;
+            if (handCenter < ball.y - 20) {
+                handPaddle.y += 3;
+            } else if (handCenter > ball.y + 20) {
+                handPaddle.y -= 3;
+            }
+            handPaddle.y = Math.max(0, Math.min(canvas.height - handPaddle.height, handPaddle.y));
+
+            // Гол
+            if (ball.x < 0) {
+                // Проигрыш
+                catState.happiness = Math.max(0, catState.happiness - 5);
+                updateStats();
+                gameMode = 'main';
+                hideInstruction();
+            }
+            if (ball.x > canvas.width) {
+                // Выигрыш очка
+                ball.x = canvas.width / 2;
+                ball.y = canvas.height / 2;
+                ball.dx = -4;
+                ball.dy = 3 * (Math.random() > 0.5 ? 1 : -1);
+                playScore++;
+                if (playScore >= 5) {
+                    catState.happiness = Math.min(100, catState.happiness + 15);
+                    updateStats();
+                    gameMode = 'main';
+                    hideInstruction();
+                }
+            }
+        }
+
+        function drawPlayGame() {
+            // Ракетка котика
+            ctx.fillStyle = '#A0A0A0';
+            ctx.fillRect(catPaddle.x, catPaddle.y, catPaddle.width, catPaddle.height);
+            // Глаза на ракетке
+            ctx.fillStyle = '#FFD000';
+            ctx.fillRect(catPaddle.x + 3, catPaddle.y + 15, 4, 4);
+            ctx.fillRect(catPaddle.x + 8, catPaddle.y + 15, 4, 4);
+
+            // Ракетка руки
+            ctx.fillStyle = '#FFB6C1';
+            ctx.fillRect(handPaddle.x, handPaddle.y, handPaddle.width, handPaddle.height);
+            // Пальцы
+            ctx.fillStyle = '#FF69B4';
+            for (let i = 0; i < 4; i++) {
+                ctx.fillRect(handPaddle.x - 5, handPaddle.y + i * 15, 5, 10);
+            }
+
+            // Мяч
+            ctx.fillStyle = '#FFFF00';
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#FF0000';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Счёт
+            ctx.fillStyle = '#FFFF00';
+            ctx.font = '10px "Press Start 2P"';
+            ctx.fillText('СЧЁТ: ' + playScore + '/5', canvas.width / 2 - 60, 50);
+        }
+
+        // 💚 МИНИ-ИГРА: ЛЕЧЕНИЕ
+        let healTargets = [];
+        
+        function startHealGame() {
+            gameMode = 'heal';
+            healTargets = [];
+            score = 0;
+            
+            for (let i = 0; i < 5; i++) {
+                healTargets.push({
+                    x: 200 + Math.random() * 300,
+                    y: 150 + Math.random() * 200,
+                    size: 20 + Math.random() * 15,
+                    healed: false
+                });
+            }
+            showInstruction('КЛИКАЙ НА КРАСНЫЕ КРУГИ (БОЛЯЧКИ)!');
+        }
+
+        function drawHealGame() {
+            ctx.fillStyle = '#FF6B6B';
+            healTargets.forEach(target => {
+                if (!target.healed) {
+                    ctx.beginPath();
+                    ctx.arc(target.x, target.y, target.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#800000';
+                    ctx.fillRect(target.x - 8, target.y - 3, 16, 6);
+                    ctx.fillRect(target.x - 3, target.y - 8, 6, 16);
+                    ctx.fillStyle = '#FF6B6B';
+                }
+            });
+            
+            ctx.fillStyle = '#FFFF00';
+            ctx.font = '10px "Press Start 2P"';
+            ctx.fillText('ВЫЛЕЧЕНО: ' + score + '/5', 150, 50);
+        }
+
+        // Отрисовка котика
+        function drawCat(x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+            
+            ctx.fillStyle = COLORS.cat1;
+            ctx.fillRect(0, 20, 50, 30);
+            ctx.fillStyle = COLORS.cat2;
+            ctx.fillRect(0, 35, 50, 15);
+            
+            ctx.fillStyle = COLORS.cat3;
+            ctx.fillRect(10, 22, 6, 24);
+            ctx.fillRect(25, 22, 6, 24);
+            ctx.fillRect(40, 22, 6, 24);
+            
+            ctx.fillStyle = COLORS.cat1;
+            ctx.fillRect(40, 5, 32, 26);
+            
+            ctx.fillStyle = COLORS.cat2;
+            ctx.fillRect(42, 0, 10, 10);
+            ctx.fillRect(60, 0, 10, 10);
+            ctx.fillStyle = COLORS.catLight;
+            ctx.fillRect(44, 2, 6, 6);
+            ctx.fillRect(62, 2, 6, 6);
+            
+            ctx.fillStyle = COLORS.catLight;
+            ctx.fillRect(46, 10, 10, 10);
+            ctx.fillRect(62, 10, 10, 10);
+            ctx.fillStyle = COLORS.catEye;
+            ctx.fillRect(48, 12, 6, 6);
+            ctx.fillRect(64, 12, 6, 6);
+            ctx.fillStyle = '#000';
+            ctx.fillRect(50, 13, 3, 3);
+            ctx.fillRect(66, 13, 3, 3);
+            
+            ctx.fillStyle = COLORS.catNose;
+            ctx.fillRect(68, 20, 6, 5);
+            
+            ctx.fillStyle = COLORS.catLight;
+            ctx.fillRect(35, 15, 12, 2);
+            ctx.fillRect(35, 19, 12, 2);
+            ctx.fillRect(35, 23, 12, 2);
+            ctx.fillRect(74, 15, 12, 2);
+            ctx.fillRect(74, 19, 12, 2);
+            ctx.fillRect(74, 23, 12, 2);
+            
+            const tailWag = Math.sin(frame * 0.2) * 8;
+            ctx.fillStyle = COLORS.cat2;
+            ctx.fillRect(-20, 30 + tailWag, 25, 8);
+            ctx.fillRect(-30, 25 + tailWag, 15, 8);
+            
+            const legOffset = isJumping ? 0 : Math.sin(frame * 0.3) * 8;
+            ctx.fillStyle = COLORS.cat2;
+            ctx.fillRect(5 + legOffset, 48, 8, 12);
+            ctx.fillRect(20 - legOffset, 48, 8, 12);
+            ctx.fillRect(42 + legOffset, 48, 8, 12);
+            ctx.fillRect(55 - legOffset, 48, 8, 12);
+            
+            ctx.restore();
+        }
+
+        // Фон
+        function drawBackground() {
+            const gradient = ctx.createLinearGradient(0, 0, 0, groundY);
+            gradient.addColorStop(0, COLORS.sky1);
+            gradient.addColorStop(0.5, COLORS.sky2);
+            gradient.addColorStop(1, COLORS.sky3);
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, groundY);
+            
+            ctx.fillStyle = COLORS.cloud;
+            for (let i = 0; i < 5; i++) {
+                const x = ((frame * 0.5) + i * 200) % (canvas.width + 150) - 75;
+                const y = 40 + (i % 3) * 30;
+                ctx.fillRect(x, y, 80, 25);
+                ctx.fillRect(x + 15, y - 15, 50, 20);
+            }
+            
+            for (let i = 0; i < 6; i++) {
+                const x = (i * 150 + 50) % canvas.width;
+                ctx.fillStyle = COLORS.trunk;
+                ctx.fillRect(x, groundY - 80, 12, 80);
+                ctx.fillStyle = COLORS.tree1;
+                ctx.fillRect(x - 25, groundY - 120, 50, 50);
+                ctx.fillStyle = COLORS.tree2;
+                ctx.fillRect(x - 20, groundY - 110, 40, 40);
+            }
+            
+            ctx.fillStyle = COLORS.ground;
+            ctx.fillRect(0, groundY, canvas.width, 60);
+            ctx.fillStyle = COLORS.grass;
+            ctx.fillRect(0, groundY, canvas.width, 12);
+        }
+
+        // Управление движением котика (для кормления)
+        document.addEventListener('keydown', (e) => {
+            if (gameMode === 'feed') {
+                if (e.key === 'ArrowUp') catY = Math.max(0, catY - 30);
+                if (e.key === 'ArrowDown') catY = Math.min(groundY - 50, catY + 30);
+            }
+            if (gameMode === 'walk' && e.code === 'Space') {
+                e.preventDefault();
+                if (!isJumping) {
+                    catVelocityY = -12;
+                    isJumping = true;
+                }
+            }
+        });
+
+        // Управление мышью/тачем (для игры с мячом)
+        canvas.addEventListener('mousemove', (e) => {
+            if (gameMode === 'play') {
+                const rect = canvas.getBoundingClientRect();
+                const y = e.clientY - rect.top;
+                catPaddle.y = Math.max(0, Math.min(canvas.height - catPaddle.height, y - catPaddle.height / 2));
+            }
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (gameMode === 'play') {
+                const rect = canvas.getBoundingClientRect();
+                const y = e.touches[0].clientY - rect.top;
+                catPaddle.y = Math.max(0, Math.min(canvas.height - catPaddle.height, y - catPaddle.height / 2));
+            }
+        }, { passive: false });
+
+        // Клик для лечения
+        canvas.addEventListener('click', (e) => {
+            if (gameMode === 'heal') {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                healTargets.forEach(target => {
+                    if (!target.healed) {
+                        const dist = Math.sqrt((x - target.x) ** 2 + (y - target.y) ** 2);
+                        if (dist < target.size + 10) {
+                            target.healed = true;
+                            score++;
+                            if (score >= 5) {
+                                catState.health = Math.min(100, catState.health + 30);
+                                updateStats();
+                                gameMode = 'main';
+                                hideInstruction();
+                            }
+                        }
+                    }
+                });
+            }
+        });
+
+        // Имя котика
+        function openNameModal() {
+            document.getElementById('nameModal').style.display = 'block';
+            document.getElementById('nameInput').value = catState.name;
+        }
+
+        function saveName() {
+            const newName = document.getElementById('nameInput').value.toUpperCase();
+            if (newName) {
+                catState.name = newName;
+                document.getElementById('catName').textContent = newName;
+            }
+            document.getElementById('nameModal').style.display = 'none';
+        }
+
+        function updateStats() {
+            document.getElementById('hungerBar').style.width = catState.hunger + '%';
+            document.getElementById('happyBar').style.width = catState.happiness + '%';
+            document.getElementById('healthBar').style.width = catState.health + '%';
+            document.getElementById('energyBar').style.width = catState.energy + '%';
+        }
+
+        function showInstruction(text) {
+            instructionText.textContent = text;
+            instructions.style.display = 'block';
+            setTimeout(hideInstruction, 5000);
+        }
+
+        function hideInstruction() {
+            instructions.style.display = 'none';
+        }
+
+        setInterval(() => {
+            if (gameMode === 'main') {
+                catState.hunger = Math.max(0, catState.hunger - 1);
+                catState.happiness = Math.max(0, catState.happiness - 0.5);
+                catState.energy = Math.min(100, catState.energy + 0.3);
+                
+                if (catState.hunger < 30 || catState.happiness < 30) {
+                    catState.health = Math.max(0, catState.health - 0.5);
+                }
+                
+                updateStats();
+            }
+        }, 3000);
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            drawBackground();
+            
+            if (gameMode === 'main') {
+                drawCat(catX, groundY - 50);
+            } else if (gameMode === 'feed') {
+                updateFeedGame();
+                drawFeedGame();
+                drawCat(catX, catY);
+            } else if (gameMode === 'walk') {
+                updateWalkGame();
+                drawWalkGame();
+                drawCat(catX, catY);
+            } else if (gameMode === 'play') {
+                updatePlayGame();
+                drawPlayGame();
+            } else if (gameMode === 'heal') {
+                drawHealGame();
+                drawCat(100, 150);
+            }
+            
+            frame++;
+            requestAnimationFrame(animate);
+        }
+
+        animate();
     </script>
 </body>
 </html>
