@@ -6,7 +6,6 @@
     <title>🚶 Прогулка - Тамагочи</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Дополнительные стили для кнопок управления */
         .controls {
             position: absolute;
             bottom: 80px;
@@ -56,7 +55,6 @@
             opacity: 0.9;
         }
         
-        /* Для мобильных */
         * {
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
@@ -70,7 +68,6 @@
             <div class="scanlines"></div>
         </div>
         
-        <!-- 🎮 Кнопки управления для мобильных -->
         <div class="controls">
             <button class="ctrl-btn btn-a" id="btnJump">
                 <span>🦘</span>
@@ -104,7 +101,6 @@
         let score = 0;
         let frame = 0;
         
-        // Настройки спавна
         const spawnRate = 0.008;
         const minGap = 350;
         let lastObstacleX = 0;
@@ -114,7 +110,6 @@
             document.getElementById('instructions').style.display = 'none';
         }, 4000);
         
-        // 🎮 Управление кнопками
         const btnJump = document.getElementById('btnJump');
         const btnDouble = document.getElementById('btnDouble');
         
@@ -135,15 +130,12 @@
             }
         }
         
-        // Мышь
         btnJump.addEventListener('mousedown', (e) => { e.preventDefault(); doJump(); });
         btnDouble.addEventListener('mousedown', (e) => { e.preventDefault(); doDoubleJump(); });
         
-        // Тач (мобильные)
         btnJump.addEventListener('touchstart', (e) => { e.preventDefault(); doJump(); });
         btnDouble.addEventListener('touchstart', (e) => { e.preventDefault(); doDoubleJump(); });
         
-        // Клавиатура (для десктопа)
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space' || e.key === 'a' || e.key === 'A' || e.key === 'ф') {
                 e.preventDefault();
@@ -155,15 +147,13 @@
             }
         });
         
-        // 🐱 ПОЛНЫЙ КОТИК
-        function drawCat(x, y, direction) {
+        // 🐱 КОТИК (всегда смотрит вправо)
+        function drawCat(x, y) {
             ctx.save();
             ctx.translate(x, y);
             
-            if (direction === -1) {
-                ctx.scale(-1, 1);
-                ctx.translate(-70, 0);
-            }
+            // ✅ УБРАНО: котик больше не поворачивается, всегда смотрит вправо
+            // direction параметр удалён
             
             // Хвост
             const tailWag = isJumping ? 0 : Math.sin(frame * 0.2) * 8;
@@ -236,20 +226,17 @@
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Фон
             const skyGradient = ctx.createLinearGradient(0, 0, 0, groundY);
             skyGradient.addColorStop(0, '#5C94FC');
             skyGradient.addColorStop(1, '#87CEEB');
             ctx.fillStyle = skyGradient;
             ctx.fillRect(0, 0, canvas.width, groundY);
             
-            // Земля
             ctx.fillStyle = '#8B4513';
             ctx.fillRect(0, groundY, canvas.width, 60);
             ctx.fillStyle = '#228B22';
             ctx.fillRect(0, groundY, canvas.width, 12);
             
-            // Физика
             catVelocityY += 0.8;
             catY += catVelocityY;
             
@@ -261,7 +248,6 @@
                 hasDoubleJumped = false;
             }
             
-            // Спавн камней
             if (Math.random() < spawnRate) {
                 const spawnX = canvas.width + 50;
                 if (spawnX - lastObstacleX >= minGap || obstacles.length === 0) {
@@ -275,7 +261,6 @@
                 }
             }
             
-            // Отрисовка камней
             obstacles.forEach((obs, i) => {
                 obs.x -= 5;
                 
@@ -292,7 +277,6 @@
                 ctx.fillStyle = '#3A3A3A';
                 ctx.fillRect(obs.x + 5, obs.y + obs.height - 10, obs.width - 10, 8);
                 
-                // Столкновения
                 const catBottom = catY + 50;
                 const catRight = catX + 70;
                 const catLeft = catX;
@@ -326,19 +310,13 @@
                 }
             });
             
-            // Направление котика
-            let catDirection = 1;
-            if (obstacles.length > 0 && obstacles[0].x < catX + 35) {
-                catDirection = -1;
-            }
-            
-            drawCat(catX, catY, catDirection);
+            // ✅ ИСПРАВЛЕНО: котик всегда смотрит вправо (direction = 1 убран)
+            drawCat(catX, catY);
             
             ctx.fillStyle = '#FFFF00';
             ctx.font = '10px "Press Start 2P"';
             ctx.fillText('ПРОЙДЕНО: ' + score, 10, 30);
             
-            // Индикатор двойного прыжка
             if (isJumping && canDoubleJump && !hasDoubleJumped) {
                 ctx.fillStyle = '#00FF00';
                 ctx.fillText('⚡ 2 ПРЫЖОК: ГОТОВ', 10, 50);
