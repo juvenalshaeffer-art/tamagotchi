@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💚 Лечение - Тамагочи</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="tamagotchi">
+        <div class="screen">
+            <canvas id="gameCanvas"></canvas>
+            <div class="scanlines"></div>
+        </div>
+        <div class="instructions" id="instructions">КЛИКАЙ НА КРАСНЫЕ КРУГИ!</div>
+        <a href="index.html" class="back-btn">⬅ НАЗАД</a>
+    </div>
+
+    <script src="game.js"></script>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+        
+        let healTargets = [];
+        let score = 0;
+        
+        document.getElementById('instructions').style.display = 'block';
+        setTimeout(() => {
+            document.getElementById('instructions').style.display = 'none';
+        }, 4000);
+        
+        for (let i = 0; i < 5; i++) {
+            healTargets.push({
+                x: 150 + Math.random() * 200,
+                y: 100 + Math.random() * 200,
+                size: 25 + Math.random() * 15,
+                healed: false
+            });
+        }
+        
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            healTargets.forEach(target => {
+                if (!target.healed) {
+                    const dist = Math.sqrt((x - target.x) ** 2 + (y - target.y) ** 2);
+                    if (dist < target.size + 10) {
+                        target.healed = true;
+                        score++;
+                        if (score >= 5) {
+                            catState.health = Math.min(100, catState.health + 30);
+                            saveState();
+                            window.location.href = 'index.html';
+                        }
+                    }
+                }
+            });
+        });
+        
+        function drawCat(x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.fillStyle = '#C0C0C0';
+            ctx.fillRect(0, 20, 50, 30);
+            ctx.fillRect(40, 5, 32, 26);
+            ctx.fillStyle = '#FFD000';
+            ctx.fillRect(46, 10, 10, 10);
+            ctx.fillRect(62, 10, 10, 10);
+            ctx.fillStyle = '#FF80A0';
+            ctx.fillRect(68, 20, 6, 5);
+            ctx.restore();
+        }
+        
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#E8F4F8';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            healTargets.forEach(target => {
+                if (!target.healed) {
+                    ctx.fillStyle = '#FF6B6B';
+                    ctx.beginPath();
+                    ctx.arc(target.x, target.y, target.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#800000';
+                    ctx.fillRect(target.x - 8, target.y - 3, 16, 6);
+                    ctx.fillRect(target.x - 3, target.y - 8, 6, 16);
+                }
+            });
+            
+            drawCat(100, 150);
+            
+            ctx.fillStyle = '#FFFF00';
+            ctx.font = '10px "Press Start 2P"';
+            ctx.fillText('ВЫЛЕЧЕНО: ' + score + '/5', 10, 30);
+            
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+    </script>
+</body>
+</html>
