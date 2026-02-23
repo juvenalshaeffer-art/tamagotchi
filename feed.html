@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍖 Кормление - Тамагочи</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="tamagotchi">
+        <div class="screen">
+            <canvas id="gameCanvas"></canvas>
+            <div class="scanlines"></div>
+        </div>
+        <div class="instructions" id="instructions">ЛОВИ РЫБКИ СТРЕЛКАМИ ↑↓</div>
+        <a href="index.html" class="back-btn">⬅ НАЗАД</a>
+    </div>
+
+    <script src="game.js"></script>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+        
+        const groundY = canvas.height - 60;
+        let catY = groundY - 50;
+        let foodItems = [];
+        let score = 0;
+        let frame = 0;
+        
+        document.getElementById('instructions').style.display = 'block';
+        setTimeout(() => {
+            document.getElementById('instructions').style.display = 'none';
+        }, 4000);
+        
+        // Управление
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowUp') catY = Math.max(groundY - 150, catY - 30);
+            if (e.key === 'ArrowDown') catY = Math.min(groundY - 50, catY + 30);
+        });
+        
+        function drawCat(x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.fillStyle = '#C0C0C0';
+            ctx.fillRect(0, 20, 50, 30);
+            ctx.fillRect(40, 5, 32, 26);
+            ctx.fillStyle = '#FFD000';
+            ctx.fillRect(46, 10, 10, 10);
+            ctx.fillRect(62, 10, 10, 10);
+            ctx.fillStyle = '#FF80A0';
+            ctx.fillRect(68, 20, 6, 5);
+            ctx.restore();
+        }
+        
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Фон
+            ctx.fillStyle = '#87CEEB';
+            ctx.fillRect(0, 0, canvas.width, groundY);
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(0, groundY, canvas.width, 60);
+            ctx.fillStyle = '#228B22';
+            ctx.fillRect(0, groundY, canvas.width, 12);
+            
+            // Спавн еды
+            if (Math.random() < 0.02) {
+                foodItems.push({
+                    x: canvas.width,
+                    y: groundY - 50 - Math.random() * 100,
+                    width: 25,
+                    height: 25
+                });
+            }
+            
+            // Еда (рыбки)
+            ctx.fillStyle = '#FF6B6B';
+            foodItems.forEach((food, i) => {
+                food.x -= 4;
+                ctx.fillRect(food.x, food.y, food.width, food.height);
+                
+                // Столкновение
+                if (100 < food.x + food.width && 150 > food.x &&
+                    catY < food.y + food.height && catY + 50 > food.y) {
+                    foodItems.splice(i, 1);
+                    score++;
+                    catState.hunger = Math.min(100, catState.hunger + 8);
+                    saveState();
+                }
+                
+                if (food.x < -50) foodItems.splice(i, 1);
+            });
+            
+            drawCat(100, catY);
+            
+            ctx.fillStyle = '#FFFF00';
+            ctx.font = '10px "Press Start 2P"';
+            ctx.fillText('СЪЕДЕНО: ' + score, 10, 30);
+            
+            frame++;
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+    </script>
+</body>
+</html>
