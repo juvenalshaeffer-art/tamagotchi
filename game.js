@@ -15,7 +15,9 @@ let mainScreenState = {
     targetX: 200,
     isSleeping: false,
     sleepTimer: 0,
-    direction: 1
+    direction: 1,
+    isOnSofa: false,
+    isOnWindow: false
 };
 
 function loadState() {
@@ -51,6 +53,7 @@ function toggleSleep() {
         mainScreenState.targetX = 180;
     } else {
         mainScreenState.action = 'idle';
+        mainScreenState.isOnSofa = false;
     }
 }
 
@@ -87,6 +90,7 @@ function initMainScreen() {
         floorLight: '#A0522D',
         sofa: '#8B0000',
         sofaLight: '#A52A2A',
+        sofaSeat: '#DC143C',
         window: '#87CEEB',
         windowFrame: '#FFFFFF',
         cat1: '#C0C0C0',
@@ -100,19 +104,22 @@ function initMainScreen() {
     let frame = 0;
     const groundY = canvas.height - 60;
     
-    // Объекты комнаты (СТОЛИК УБРАН)
+    // 🛋️ ДИВАН (вид сбоку - котик запрыгивает НА него)
     const sofa = { 
-        x: 80, 
-        y: groundY - 70,
-        width: 180,
-        height: 70
+        x: 100, 
+        y: groundY - 55,      // Сиденье на высоте 55px от пола
+        width: 160,
+        height: 55,
+        seatY: groundY - 55   // Уровень сиденья
     };
     
+    // 🪟 ОКНО (котик запрыгивает на подоконник)
     const window = { 
-        x: canvas.width - 180, 
-        y: 80,
-        width: 120,
-        height: 140
+        x: canvas.width - 200, 
+        y: 60,
+        width: 140,
+        height: 160,
+        sillY: groundY - 100  // Уровень подоконника
     };
     
     let autoMoveTimer = 0;
@@ -122,6 +129,7 @@ function initMainScreen() {
         if (mainScreenState.isSleeping) {
             mainScreenState.action = 'sleeping';
             mainScreenState.targetX = sofa.x + 50;
+            mainScreenState.isOnSofa = true;
         }
         
         const dx = mainScreenState.targetX - mainScreenState.catX;
@@ -129,8 +137,12 @@ function initMainScreen() {
             mainScreenState.catX += dx * 0.03;
             mainScreenState.direction = dx > 0 ? 1 : -1;
             mainScreenState.action = 'walking';
+            mainScreenState.isOnSofa = false;
+            mainScreenState.isOnWindow = false;
         } else {
-            mainScreenState.action = 'idle';
+            if (mainScreenState.action !== 'sleeping' && mainScreenState.action !== 'window') {
+                mainScreenState.action = 'idle';
+            }
         }
         
         autoMoveTimer++;
@@ -144,31 +156,37 @@ function initMainScreen() {
                 mainScreenState.action = 'walking';
             } else if (rand < 0.6 && catState.happiness < 60) {
                 currentTarget = 'window';
-                mainScreenState.targetX = window.x + 30;
+                mainScreenState.targetX = window.x + 40;
                 mainScreenState.action = 'walking';
             } else {
                 currentTarget = 'random';
-                mainScreenState.targetX = 150 + Math.random() * (canvas.width - 350);
+                mainScreenState.targetX = 150 + Math.random() * (canvas.width - 400);
             }
         }
         
+        // ✅ Проверка: котик на диване или подоконнике
         if (Math.abs(dx) < 10) {
-            if (currentTarget === 'sofa' && !mainScreenState.isSleeping) {
-                mainScreenState.action = 'sleeping';
-                catState.energy = Math.min(100, catState.energy + 5);
-                catState.happiness = Math.min(100, catState.happiness + 3);
+            if (currentTarget === 'sofa') {
+                mainScreenState.isOnSofa = true;
+                mainScreenState.isOnWindow = false;
+                if (!mainScreenState.isSleeping) {
+                    mainScreenState.action = 'idle';
+                }
             } else if (currentTarget === 'window') {
+                mainScreenState.isOnWindow = true;
+                mainScreenState.isOnSofa = false;
                 mainScreenState.action = 'window';
-                catState.happiness = Math.min(100, catState.happiness + 5);
+                catState.happiness = Math.min(100, catState.happiness + 0.1);
             }
         }
         
-        if (mainScreenState.action === 'sleeping') {
-            mainScreenState.catY = sofa.y - 20;
-        } else if (mainScreenState.action === 'window') {
-            mainScreenState.catY = window.y + window.height - 20;
+        // ✅ Y позиция: на полу, на диване или на подоконнике
+        if (mainScreenState.action === 'sleeping' || mainScreenState.isOnSofa) {
+            mainScreenState.catY = sofa.seatY - 35;  // Котик лежит НА диване
+        } else if (mainScreenState.action === 'window' || mainScreenState.isOnWindow) {
+            mainScreenState.catY = window.sillY - 35;  // Котик сидит НА подоконнике
         } else {
-            mainScreenState.catY = groundY - 50;
+            mainScreenState.catY = groundY - 50;  // Котик на полу
         }
     }
     
@@ -188,11 +206,11 @@ function initMainScreen() {
             ctx.fillRect(i, groundY + 10, 35, 5);
         }
         
-        // 🪟 Окно
+        // 🪟 Окно (на стене)
         ctx.fillStyle = COLORS.windowFrame;
         ctx.fillRect(window.x, window.y, window.width, window.height);
         ctx.fillStyle = COLORS.window;
-        ctx.fillRect(window.x + 10, window.y + 10, window.width - 20, window.height - 20);
+        ctx.fillRect(window.x + 12, window.y + 12, window.width - 24, window.height - 24);
         
         // Рама окна
         ctx.strokeStyle = '#FFFFFF';
@@ -204,32 +222,49 @@ function initMainScreen() {
         ctx.lineTo(window.x + window.width, window.y + window.height/2);
         ctx.stroke();
         
-        // Подоконник
+        // Подоконник (выступает)
         ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(window.x - 15, window.y + window.height - 8, window.width + 30, 15);
+        ctx.fillRect(window.x - 20, window.y + window.height - 12, window.width + 40, 20);
+        ctx.fillStyle = '#E0E0E0';
+        ctx.fillRect(window.x - 20, window.y + window.height - 8, window.width + 40, 8);
         
-        // 🛋️ Диван
+        // 🛋️ Диван (ВИД СБОКУ - котик запрыгивает НА него)
+        // Ножки
+        ctx.fillStyle = '#4A0000';
+        ctx.fillRect(sofa.x + 15, sofa.y + sofa.height - 10, 20, 10);
+        ctx.fillRect(sofa.x + sofa.width - 35, sofa.y + sofa.height - 10, 20, 10);
+        
+        // Основная часть дивана
         ctx.fillStyle = COLORS.sofa;
         ctx.fillRect(sofa.x, sofa.y, sofa.width, sofa.height);
+        
+        // Сиденье (светлее)
+        ctx.fillStyle = COLORS.sofaSeat;
+        ctx.fillRect(sofa.x + 10, sofa.y + 5, sofa.width - 20, sofa.height - 15);
+        
+        // Спинка дивана (сзади)
         ctx.fillStyle = COLORS.sofaLight;
-        ctx.fillRect(sofa.x + 15, sofa.y + 15, sofa.width - 30, sofa.height - 25);
+        ctx.fillRect(sofa.x, sofa.y - 35, sofa.width, 40);
+        ctx.fillStyle = COLORS.sofaSeat;
+        ctx.fillRect(sofa.x + 10, sofa.y - 30, sofa.width - 20, 30);
         
-        // Подушки на диване
-        ctx.fillStyle = '#DC143C';
-        ctx.fillRect(sofa.x + 25, sofa.y + 10, 45, 35);
-        ctx.fillRect(sofa.x + 80, sofa.y + 10, 45, 35);
+        // Подлокотники
+        ctx.fillStyle = COLORS.sofaLight;
+        ctx.fillRect(sofa.x - 10, sofa.y - 10, 15, sofa.height + 10);
+        ctx.fillRect(sofa.x + sofa.width - 5, sofa.y - 10, 15, sofa.height + 10);
         
-        // Спинка дивана
-        ctx.fillStyle = '#A52A2A';
-        ctx.fillRect(sofa.x, sofa.y - 20, sofa.width, 25);
-        
-        // Ножки дивана
-        ctx.fillStyle = '#4A0000';
-        ctx.fillRect(sofa.x + 15, sofa.y + sofa.height - 8, 20, 8);
-        ctx.fillRect(sofa.x + sofa.width - 35, sofa.y + sofa.height - 8, 20, 8);
+        // Полоски на диване
+        ctx.strokeStyle = '#A52A2A';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < sofa.width; i += 30) {
+            ctx.beginPath();
+            ctx.moveTo(sofa.x + 15 + i, sofa.y + 10);
+            ctx.lineTo(sofa.x + 15 + i, sofa.y + sofa.height - 15);
+            ctx.stroke();
+        }
     }
     
-    // ✅ ИСПРАВЛЕНО: Лапы двигаются только при ходьбе
+    // ✅ ИСПРАВЛЕННЫЙ КОТИК (запрыгивает, ложится, хвост свисает)
     function drawCat(x, y, direction, action) {
         ctx.save();
         ctx.translate(x, y);
@@ -240,105 +275,177 @@ function initMainScreen() {
         }
         
         if (action === 'sleeping') {
-            // 😴 Спящий котик
+            // 😴 СПЯЩИЙ КОТИК НА ДИВАНЕ (лёжа, глаза закрыты)
             ctx.fillStyle = COLORS.cat2;
+            
+            // Тело (лёжа на боку)
             ctx.beginPath();
-            ctx.ellipse(35, 35, 30, 25, 0, 0, Math.PI * 2);
+            ctx.ellipse(35, 40, 35, 20, 0, 0, Math.PI * 2);
             ctx.fill();
             
+            // Полоски на спине
+            ctx.fillStyle = COLORS.cat3;
+            ctx.fillRect(20, 25, 8, 25);
+            ctx.fillRect(35, 25, 8, 25);
+            ctx.fillRect(50, 25, 8, 25);
+            
+            // Голова (лежит на подушке)
             ctx.fillStyle = COLORS.cat1;
             ctx.beginPath();
-            ctx.arc(55, 30, 15, 0, Math.PI * 2);
+            ctx.arc(55, 35, 18, 0, Math.PI * 2);
             ctx.fill();
             
-            // Закрытые глаза
+            // Уши
+            ctx.fillStyle = COLORS.cat2;
+            ctx.beginPath();
+            ctx.moveTo(45, 25);
+            ctx.lineTo(48, 15);
+            ctx.lineTo(52, 23);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(58, 23);
+            ctx.lineTo(62, 15);
+            ctx.lineTo(65, 25);
+            ctx.fill();
+            
+            // ✅ ЗАКРЫТЫЕ ГЛАЗА (изогнутые линии)
             ctx.strokeStyle = '#000';
             ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.moveTo(52, 28);
-            ctx.lineTo(58, 28);
-            ctx.moveTo(64, 28);
-            ctx.lineTo(70, 28);
+            ctx.moveTo(50, 33);
+            ctx.quadraticCurveTo(53, 36, 56, 33);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(60, 33);
+            ctx.quadraticCurveTo(63, 36, 66, 33);
             ctx.stroke();
             
-            // Zzz
+            // Нос
+            ctx.fillStyle = COLORS.catNose;
+            ctx.beginPath();
+            ctx.arc(58, 38, 3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Хвост (свёрнут вокруг тела)
+            ctx.fillStyle = COLORS.cat2;
+            ctx.beginPath();
+            ctx.arc(15, 45, 12, 0, Math.PI * 1.5);
+            ctx.lineWidth = 8;
+            ctx.strokeStyle = COLORS.cat2;
+            ctx.stroke();
+            
+            // Zzz (анимация)
             ctx.fillStyle = '#87CEEB';
-            ctx.font = '12px "Press Start 2P"';
-            ctx.fillText('Z', 40 + Math.sin(frame * 0.1) * 3, 10 - Math.cos(frame * 0.1) * 5);
-            ctx.fillText('z', 35 + Math.sin(frame * 0.15) * 3, 5 - Math.cos(frame * 0.15) * 5);
+            ctx.font = 'bold 14px "Press Start 2P"';
+            const zOffset = Math.sin(frame * 0.08) * 3;
+            ctx.fillText('Z', 30 + zOffset, 15 - zOffset);
+            ctx.font = 'bold 10px "Press Start 2P"';
+            ctx.fillText('z', 22 + zOffset * 0.8, 10 - zOffset * 0.8);
+            ctx.fillText('z', 15 + zOffset * 0.6, 8 - zOffset * 0.6);
             
         } else if (action === 'window') {
-            // 🪟 Котик на подоконнике (лапы не двигаются)
-            ctx.fillStyle = COLORS.cat2;
-            ctx.fillRect(0, 20, 50, 30);
-            ctx.fillStyle = COLORS.cat1;
-            ctx.fillRect(0, 35, 50, 15);
+            // 🪟 КОТИК НА ПОДОКОННИКЕ (сидит, хвост свисает вниз)
             
+            // Хвост (свисает с подоконника вниз)
+            ctx.fillStyle = COLORS.cat2;
+            const tailSway = Math.sin(frame * 0.05) * 3;
+            ctx.fillRect(10, 45, 8, 40 + tailSway);  // Хвост вниз
+            ctx.fillRect(8, 80 + tailSway, 12, 8);   // Кисточка хвоста
+            
+            // Задние лапы (сидит)
+            ctx.fillStyle = COLORS.cat2;
+            ctx.fillRect(15, 40, 10, 12);
+            ctx.fillRect(45, 40, 10, 12);
+            
+            // Тело (сидячее положение)
+            ctx.fillStyle = COLORS.cat1;
+            ctx.fillRect(10, 15, 50, 35);
+            ctx.fillStyle = COLORS.cat2;
+            ctx.fillRect(10, 35, 50, 15);
+            
+            // Полоски
             ctx.fillStyle = COLORS.cat3;
-            ctx.fillRect(10, 22, 6, 24);
-            ctx.fillRect(25, 22, 6, 24);
-            ctx.fillRect(40, 22, 6, 24);
+            ctx.fillRect(18, 18, 8, 28);
+            ctx.fillRect(32, 18, 8, 28);
+            ctx.fillRect(46, 18, 8, 28);
             
+            // Передние лапы (перед собой)
+            ctx.fillStyle = COLORS.cat2;
+            ctx.fillRect(20, 45, 8, 10);
+            ctx.fillRect(42, 45, 8, 10);
+            
+            // Голова
             ctx.fillStyle = COLORS.cat1;
-            ctx.fillRect(40, 5, 32, 26);
+            ctx.fillRect(35, 0, 35, 28);
             
+            // Уши
             ctx.fillStyle = COLORS.cat2;
-            ctx.fillRect(42, 0, 10, 10);
-            ctx.fillRect(60, 0, 10, 10);
+            ctx.fillRect(38, -8, 10, 10);
+            ctx.fillRect(56, -8, 10, 10);
             ctx.fillStyle = COLORS.catLight;
-            ctx.fillRect(44, 2, 6, 6);
-            ctx.fillRect(62, 2, 6, 6);
+            ctx.fillRect(40, -6, 6, 6);
+            ctx.fillRect(58, -6, 6, 6);
             
+            // Глаза (смотрит в окно - большие)
             ctx.fillStyle = COLORS.catLight;
-            ctx.fillRect(46, 10, 10, 10);
-            ctx.fillRect(62, 10, 10, 10);
+            ctx.fillRect(42, 8, 10, 10);
+            ctx.fillRect(58, 8, 10, 10);
             ctx.fillStyle = COLORS.catEye;
-            ctx.fillRect(50, 12, 6, 6);
-            ctx.fillRect(66, 12, 6, 6);
+            ctx.fillRect(44, 10, 6, 6);
+            ctx.fillRect(60, 10, 6, 6);
             ctx.fillStyle = '#000';
-            ctx.fillRect(52, 13, 3, 3);
-            ctx.fillRect(68, 13, 3, 3);
+            ctx.fillRect(46, 11, 3, 3);
+            ctx.fillRect(62, 11, 3, 3);
             
+            // Нос
             ctx.fillStyle = COLORS.catNose;
-            ctx.fillRect(68, 20, 6, 5);
+            ctx.fillRect(66, 18, 5, 4);
             
-            // Хвост слегка двигается
-            const tailWag = Math.sin(frame * 0.1) * 3;
-            ctx.fillStyle = COLORS.cat2;
-            ctx.fillRect(-20, 35 + tailWag, 25, 8);
+            // Усы
+            ctx.fillStyle = COLORS.catLight;
+            ctx.fillRect(30, 14, 12, 2);
+            ctx.fillRect(30, 18, 12, 2);
+            ctx.fillRect(70, 14, 12, 2);
+            ctx.fillRect(70, 18, 12, 2);
             
         } else {
-            // 🐱 Обычный котик
-            // ✅ Хвост двигается всегда (даже когда стоит)
-            const tailWag = Math.sin(frame * 0.2) * 8;
+            // 🐱 ОБЫЧНЫЙ КОТИК (на полу или диване)
+            const isWalking = action === 'walking';
+            
+            // Хвост (двигается)
+            const tailWag = isWalking ? Math.sin(frame * 0.3) * 12 : Math.sin(frame * 0.15) * 6;
             ctx.fillStyle = COLORS.cat2;
             ctx.fillRect(-20, 30 + tailWag, 25, 8);
             ctx.fillRect(-30, 25 + tailWag, 15, 8);
             
-            // ✅ Лапы двигаются ТОЛЬКО при ходьбе
-            const legOffset = action === 'walking' ? Math.sin(frame * 0.4) * 10 : 0;
+            // Лапы (двигаются только при ходьбе)
+            const legOffset = isWalking ? Math.sin(frame * 0.4) * 10 : 0;
             ctx.fillStyle = COLORS.cat2;
             ctx.fillRect(5 + legOffset, 48, 8, 12);
             ctx.fillRect(20 - legOffset, 48, 8, 12);
             
+            // Тело
             ctx.fillStyle = COLORS.cat1;
             ctx.fillRect(0, 20, 50, 30);
             ctx.fillStyle = COLORS.cat2;
             ctx.fillRect(0, 35, 50, 15);
             
+            // Полоски
             ctx.fillStyle = COLORS.cat3;
             ctx.fillRect(10, 22, 6, 24);
             ctx.fillRect(25, 22, 6, 24);
             ctx.fillRect(40, 22, 6, 24);
             
-            // Передние лапы тоже только при ходьбе
+            // Передние лапы
             ctx.fillStyle = COLORS.cat2;
             ctx.fillRect(42 + legOffset, 48, 8, 12);
             ctx.fillRect(55 - legOffset, 48, 8, 12);
             
+            // Голова
             ctx.fillStyle = COLORS.cat1;
             ctx.fillRect(40, 5, 32, 26);
             
+            // Уши
             ctx.fillStyle = COLORS.cat2;
             ctx.fillRect(42, 0, 10, 10);
             ctx.fillRect(60, 0, 10, 10);
@@ -346,6 +453,7 @@ function initMainScreen() {
             ctx.fillRect(44, 2, 6, 6);
             ctx.fillRect(62, 2, 6, 6);
             
+            // Глаза
             ctx.fillStyle = COLORS.catLight;
             ctx.fillRect(46, 10, 10, 10);
             ctx.fillRect(62, 10, 10, 10);
@@ -356,9 +464,11 @@ function initMainScreen() {
             ctx.fillRect(50, 13, 3, 3);
             ctx.fillRect(66, 13, 3, 3);
             
+            // Нос
             ctx.fillStyle = COLORS.catNose;
             ctx.fillRect(68, 20, 6, 5);
             
+            // Усы
             ctx.fillStyle = COLORS.catLight;
             ctx.fillRect(35, 15, 12, 2);
             ctx.fillRect(35, 19, 12, 2);
