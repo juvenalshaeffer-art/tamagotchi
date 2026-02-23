@@ -1,47 +1,42 @@
-// 🐱 КОТИК ТАМАГОЧИ - game.js (минимальная версия)
+// 🐱 КОТИК ТАМАГОЧИ - game.js
 
-let catState = {
-    name: 'КОТИК',
-    hunger: 80,
-    happiness: 80,
-    health: 100,
-    energy: 100
-};
-
+// ✅ Инициализация ПУСТЫМИ значениями
+let catState = {};
 let mainScreenState = {
     catX: 200, catY: 0, action: 'idle', targetX: 200,
     isSleeping: false, direction: 1,
     isOnSofa: false, isOnWindow: false
 };
 
-function loadState() {
+// ✅ СИНХРОННАЯ ЗАГРУЗКА (до всего)
+function loadStateSync() {
     try {
-        if (window.Telegram?.WebApp?.CloudStorage) {
-            window.Telegram.WebApp.CloudStorage.getItem('catState', (err, val) => {
-                if (!err && val) catState = JSON.parse(val);
-                else {
-                    const s = localStorage.getItem('catState');
-                    if (s) catState = JSON.parse(s);
-                }
-                updateStats();
-            });
+        const saved = localStorage.getItem('catState');
+        if (saved) {
+            catState = JSON.parse(saved);
+            console.log('✅ Загружено из localStorage:', catState);
         } else {
-            const s = localStorage.getItem('catState');
-            if (s) catState = JSON.parse(s);
-            updateStats();
+            // Дефолтные значения ТОЛЬКО если нет сохранения
+            catState = {
+                name: 'КОТИК',
+                hunger: 80,
+                happiness: 80,
+                health: 100,
+                energy: 100
+            };
+            console.log('🆕 Создано новое состояние');
         }
-    } catch(e) { console.error('Load error:', e); updateStats(); }
+    } catch(e) {
+        console.error('❌ Ошибка загрузки:', e);
+        catState = { name: 'КОТИК', hunger: 80, happiness: 80, health: 100, energy: 100 };
+    }
 }
 
 function saveState() {
     try {
         localStorage.setItem('catState', JSON.stringify(catState));
-        if (window.Telegram?.WebApp?.CloudStorage) {
-            window.Telegram.WebApp.CloudStorage.setItem('catState', JSON.stringify(catState), (err) => {
-                if (err) console.error('Cloud save error:', err);
-            });
-        }
-    } catch(e) { console.error('Save error:', e); }
+        console.log('💾 Сохранено:', catState);
+    } catch(e) { console.error('❌ Ошибка сохранения:', e); }
 }
 
 function updateStats() {
@@ -88,7 +83,9 @@ setInterval(() => {
 
 // Инициализация главного экрана
 function initMainScreen() {
-    loadState();
+    // ✅ СНАЧАЛА ЗАГРУЖАЕМ!
+    loadStateSync();
+    
     const canvas = document.getElementById('mainCanvas');
     if (!canvas) return;
     
@@ -106,8 +103,6 @@ function initMainScreen() {
     
     let frame = 0;
     const groundY = canvas.height - 60;
-    
-    // ✅ ПРАВИЛЬНЫЕ КООРДИНАТЫ
     const sofa = { x: 100, y: groundY - 55, width: 160, height: 55, seatY: groundY - 55 };
     const window = { x: canvas.width - 200, y: 60, width: 140, height: 160, sillY: groundY - 100 };
     
@@ -151,17 +146,14 @@ function initMainScreen() {
     }
     
     function drawRoom() {
-        // Стена
         const grad = ctx.createLinearGradient(0, 0, 0, groundY);
         grad.addColorStop(0, '#FFF8DC'); grad.addColorStop(1, COLORS.wall);
         ctx.fillStyle = grad; ctx.fillRect(0, 0, canvas.width, groundY);
-        
-        // Пол
         ctx.fillStyle = COLORS.floor; ctx.fillRect(0, groundY, canvas.width, 60);
         ctx.fillStyle = COLORS.floorLight;
         for (let i = 0; i < canvas.width; i += 40) ctx.fillRect(i, groundY + 10, 35, 5);
         
-        // 🪟 Окно (НА СТЕНЕ, y: 60)
+        // 🪟 Окно
         ctx.fillStyle = COLORS.windowFrame;
         ctx.fillRect(window.x, window.y, window.width, window.height);
         ctx.fillStyle = COLORS.window;
@@ -176,7 +168,7 @@ function initMainScreen() {
         ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(window.x - 20, window.y + window.height - 12, window.width + 40, 20);
         
-        // 🛋️ Диван (НА ПОЛУ, y: groundY - 55)
+        // 🛋️ Диван
         ctx.fillStyle = '#4A0000';
         ctx.fillRect(sofa.x + 15, sofa.y + sofa.height - 10, 20, 10);
         ctx.fillRect(sofa.x + sofa.width - 35, sofa.y + sofa.height - 10, 20, 10);
@@ -260,3 +252,6 @@ function initMainScreen() {
     }
     animate();
 }
+
+// ✅ СРАЗУ ЗАГРУЖАЕМ при подключении скрипта
+loadStateSync();
