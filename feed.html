@@ -8,7 +8,9 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            if (window.Telegram?.WebApp) { window.Telegram.WebApp.expand(); window.Telegram.WebApp.ready(); }
+            if (window.Telegram?.WebApp) {
+                try { window.Telegram.WebApp.expand(); window.Telegram.WebApp.ready(); } catch(e) {}
+            }
         });
     </script>
 </head>
@@ -22,11 +24,39 @@
         <div class="instructions" id="instructions">ЛОВИ РЫБКИ! КНОПКИ ← →</div>
         <a href="index.html" class="back-btn">⬅ НАЗАД</a>
     </div>
-    <script src="game.js"></script>
     <script>
+        // ✅ ВСТРОЕННОЕ СОХРАНЕНИЕ (без зависимости от game.js)
+        const catState = {
+            name: 'КОТИК',
+            hunger: 80,
+            happiness: 80,
+            health: 100,
+            energy: 100
+        };
+        
+        // Загрузка состояния
+        try {
+            const saved = localStorage.getItem('catState');
+            if (saved) {
+                const loaded = JSON.parse(saved);
+                Object.assign(catState, loaded);
+                console.log('✅ Загружено:', catState);
+            }
+        } catch(e) { console.error('❌ Ошибка загрузки:', e); }
+        
+        // Сохранение состояния
+        function saveState() {
+            try {
+                localStorage.setItem('catState', JSON.stringify(catState));
+                console.log('💾 Сохранено:', catState);
+            } catch(e) { console.error('❌ Ошибка сохранения:', e); }
+        }
+        
+        // Игра
         const canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
         canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
-        const groundY = canvas.height - 60; let catX = canvas.width/2 - 35, catY = groundY - 50, catDirection = 1;
+        const groundY = canvas.height - 60;
+        let catX = canvas.width/2 - 35, catY = groundY - 50, catDirection = 1;
         let foodItems = [], score = 0, frame = 0, moveSpeed = 25;
         
         document.getElementById('instructions').style.display = 'block';
@@ -47,7 +77,6 @@
             if (e.key === 'ArrowRight') moveRight(); 
         });
         
-        // 🐱 Рисуем котика
         function drawCat(x, y, direction) {
             ctx.save(); ctx.translate(x, y); 
             if (direction === -1) { ctx.scale(-1, 1); ctx.translate(-70, 0); }
@@ -99,23 +128,11 @@
             ctx.restore();
         }
         
-        // 🐟 РИСУЕМ ДЕТАЛИЗИРОВАННУЮ РЫБКУ
         function drawDetailedFish(food) {
-            const x = food.x;
-            const y = food.y;
-            const w = food.width;
-            const h = food.height;
+            const x = food.x, y = food.y, w = food.width, h = food.height;
             
-            // 🎨 Цвета рыбки
-            const bodyColor = '#FF6B6B';
-            const bellyColor = '#FFB3B3';
-            const scaleColor = '#FF8888';
-            const finColor = '#FF5555';
-            const eyeWhite = '#FFFFFF';
-            const eyePupil = '#000000';
-            
-            // 1️⃣ ХВОСТ (треугольный)
-            ctx.fillStyle = finColor;
+            // Хвост
+            ctx.fillStyle = '#FF5555';
             ctx.beginPath();
             ctx.moveTo(x, y + h/2);
             ctx.lineTo(x - 12, y + h/4);
@@ -123,24 +140,22 @@
             ctx.closePath();
             ctx.fill();
             
-            // 2️⃣ ТЕЛО (овальное с чешуёй)
-            ctx.fillStyle = bodyColor;
+            // Тело
+            ctx.fillStyle = '#FF6B6B';
             ctx.beginPath();
             ctx.ellipse(x + w/2, y + h/2, w/2, h/2, 0, 0, Math.PI * 2);
             ctx.fill();
             
-            // 3️⃣ БРЮШКО (светлее)
-            ctx.fillStyle = bellyColor;
+            // Брюшко
+            ctx.fillStyle = '#FFB3B3';
             ctx.beginPath();
             ctx.ellipse(x + w/2, y + h/2 + 3, w/2 - 4, h/3, 0, 0, Math.PI * 2);
             ctx.fill();
             
-            // 4️⃣ ЧЕШУЯ (полукруги на теле)
-            ctx.fillStyle = scaleColor;
-            const scaleRows = 3;
-            const scaleCols = 4;
-            for (let row = 0; row < scaleRows; row++) {
-                for (let col = 0; col < scaleCols; col++) {
+            // Чешуя
+            ctx.fillStyle = '#FF8888';
+            for (let row = 0; row < 3; row++) {
+                for (let col = 0; col < 4; col++) {
                     const sx = x + w/4 + col * (w/5);
                     const sy = y + h/3 + row * (h/4);
                     ctx.beginPath();
@@ -149,8 +164,8 @@
                 }
             }
             
-            // 5️⃣ ВЕРХНИЙ ПЛАВНИК
-            ctx.fillStyle = finColor;
+            // Плавники
+            ctx.fillStyle = '#FF5555';
             ctx.beginPath();
             ctx.moveTo(x + w/3, y + h/2 - 5);
             ctx.lineTo(x + w/2, y - 8);
@@ -158,7 +173,6 @@
             ctx.closePath();
             ctx.fill();
             
-            // 6️⃣ НИЖНИЙ ПЛАВНИК
             ctx.beginPath();
             ctx.moveTo(x + w/3, y + h/2 + 5);
             ctx.lineTo(x + w/2, y + h + 8);
@@ -166,65 +180,30 @@
             ctx.closePath();
             ctx.fill();
             
-            // 7️⃣ БОКОВОЙ ПЛАВНИК
-            ctx.fillStyle = '#FF7777';
-            ctx.beginPath();
-            ctx.ellipse(x + w/2, y + h/2, 8, 5, 0.3, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // 8️⃣ ГОЛОВА (округлая)
-            ctx.fillStyle = bodyColor;
-            ctx.beginPath();
-            ctx.arc(x + w - 8, y + h/2, 12, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // 9️⃣ ГЛАЗА (большие с бликом)
-            // Белок
-            ctx.fillStyle = eyeWhite;
+            // Глаз
+            ctx.fillStyle = '#FFFFFF';
             ctx.beginPath();
             ctx.arc(x + w - 5, y + h/2 - 3, 6, 0, Math.PI * 2);
             ctx.fill();
-            
-            // Зрачок
-            ctx.fillStyle = eyePupil;
+            ctx.fillStyle = '#000000';
             ctx.beginPath();
             ctx.arc(x + w - 3, y + h/2 - 3, 3, 0, Math.PI * 2);
             ctx.fill();
-            
-            // Блик в глазу
-            ctx.fillStyle = eyeWhite;
+            ctx.fillStyle = '#FFFFFF';
             ctx.beginPath();
             ctx.arc(x + w - 2, y + h/2 - 5, 1.5, 0, Math.PI * 2);
             ctx.fill();
             
-            // 🔟 РОТ
-            ctx.fillStyle = '#FF3333';
-            ctx.beginPath();
-            ctx.ellipse(x + w + 5, y + h/2 + 2, 4, 3, 0, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // 1️⃣1️⃣ ЖАБРЫ (линии)
-            ctx.strokeStyle = '#CC4444';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(x + w - 18, y + h/2 - 5);
-            ctx.lineTo(x + w - 18, y + h/2 + 5);
-            ctx.moveTo(x + w - 22, y + h/2 - 5);
-            ctx.lineTo(x + w - 22, y + h/2 + 5);
-            ctx.stroke();
-            
-            // 1️⃣2️⃣ БЛИК НА ТЕЛЕ
+            // Блик
             ctx.fillStyle = 'rgba(255,255,255,0.4)';
             ctx.beginPath();
             ctx.ellipse(x + w/3, y + h/2 - 5, 8, 4, 0, 0, Math.PI * 2);
             ctx.fill();
         }
         
-        // 🎣 АНИМАЦИЯ
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Фон
             ctx.fillStyle = '#87CEEB'; 
             ctx.fillRect(0, 0, canvas.width, groundY);
             ctx.fillStyle = '#8B4513'; 
@@ -232,34 +211,36 @@
             ctx.fillStyle = '#228B22'; 
             ctx.fillRect(0, groundY, canvas.width, 12);
             
-            // Спавн рыбок
             if (Math.random() < 0.02) {
                 foodItems.push({ 
                     x: Math.random() * (canvas.width - 30), 
                     y: -30, 
                     width: 30 + Math.random() * 10, 
                     height: 20 + Math.random() * 5,
-                    wiggle: Math.random() * Math.PI // Для анимации покачивания
+                    wiggle: Math.random() * Math.PI
                 });
             }
             
-            // Отрисовка рыбок
             foodItems.forEach((food, i) => {
                 food.y += 3;
                 food.wiggle += 0.1;
                 
-                // 🐟 Рисуем детальную рыбку
                 drawDetailedFish(food);
                 
-                // Столкновение с котиком
+                // Столкновение
                 if (catX < food.x + food.width && catX + 70 > food.x &&
                     catY < food.y + food.height && catY + 50 > food.y) {
                     foodItems.splice(i, 1); 
                     score++; 
-                    catState.hunger = Math.min(100, catState.hunger + 8); 
+                    
+                    // ✅ ВОССТАНОВЛЕНИЕ СЫТОСТИ
+                    catState.hunger = Math.min(100, catState.hunger + 8);
+                    console.log('🍖 Сытость:', catState.hunger);
+                    
+                    // ✅ СОХРАНЕНИЕ
                     saveState();
                     
-                    // 💫 Эффект поедания (вспышка)
+                    // Вспышка
                     ctx.fillStyle = 'rgba(255,255,0,0.5)';
                     ctx.beginPath();
                     ctx.arc(catX + 35, catY + 25, 40, 0, Math.PI * 2);
@@ -271,10 +252,11 @@
             
             drawCat(catX, catY, catDirection);
             
-            // Счёт
             ctx.fillStyle = '#FFFF00'; 
             ctx.font = '10px "Press Start 2P"'; 
             ctx.fillText('СЪЕДЕНО: ' + score, 10, 30);
+            ctx.fillStyle = '#FF6B6B';
+            ctx.fillText('СЫТОСТЬ: ' + catState.hunger, 10, 50);
             
             frame++; 
             requestAnimationFrame(animate);
