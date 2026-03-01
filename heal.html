@@ -3,89 +3,441 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>💚 Лечение - Тамагочи</title>
+    <title>💚 Лечение - Chibi Style</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            if (window.Telegram?.WebApp) { window.Telegram.WebApp.expand(); window.Telegram.WebApp.ready(); }
+            if (window.Telegram?.WebApp) {
+                try { window.Telegram.WebApp.expand(); window.Telegram.WebApp.ready(); } catch(e) {}
+            }
         });
     </script>
+    <style>
+        /* Chibi/Kawaii стили */
+        body {
+            background: linear-gradient(180deg, #FFE4EC 0%, #FFD4E8 100%);
+        }
+        
+        .tamagotchi {
+            background: linear-gradient(180deg, #FFB6C1 0%, #FFC0CB 50%, #FFD4E8 100%);
+        }
+        
+        .screen {
+            background: #FFF0F5;
+            border: 6px solid #FF69B4;
+            box-shadow: 0 0 20px rgba(255,105,180,0.3), inset 0 0 30px rgba(255,182,193,0.2);
+        }
+        
+        .instructions {
+            background: rgba(255,182,193,0.95);
+            color: #FF1493;
+            border: 3px solid #FF69B4;
+            font-size: 9px;
+            bottom: 150px;
+        }
+    </style>
 </head>
 <body>
     <div class="tamagotchi">
         <div class="screen"><canvas id="gameCanvas"></canvas><div class="scanlines"></div></div>
-        <div class="instructions" id="instructions">КЛИКАЙ НА ТАБЛЕТКИ!</div>
+        <div class="instructions" id="instructions">💊 ЛОВИ ТАБЛЕТКИ! КЛИКАЙ НА НИХ!</div>
         <a href="index.html" class="back-btn">⬅ НАЗАД</a>
     </div>
-    <script src="game.js"></script>
     <script>
+        // ✅ СОХРАНЕНИЕ СОСТОЯНИЯ
+        const catState = {
+            name: 'КОТИК',
+            hunger: 80,
+            happiness: 80,
+            health: 100,
+            energy: 100
+        };
+        
+        try {
+            const saved = localStorage.getItem('catState');
+            if (saved) {
+                const loaded = JSON.parse(saved);
+                Object.assign(catState, loaded);
+            }
+        } catch(e) { console.error('Load error:', e); }
+        
+        function saveState() {
+            try {
+                localStorage.setItem('catState', JSON.stringify(catState));
+            } catch(e) { console.error('Save error:', e); }
+        }
+        
+        // 🎮 ИГРА
         const canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
-        canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
-        let healTargets = [], score = 0, frame = 0;
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+        
+        let pills = [];
+        let score = 0;
+        let frame = 0;
+        let particles = []; // Для эффектов
+        
         document.getElementById('instructions').style.display = 'block';
         setTimeout(() => { document.getElementById('instructions').style.display = 'none'; }, 4000);
-        for (let i = 0; i < 6; i++) {
-            const type = Math.random() > 0.5 ? 'capsule' : 'pill';
-            healTargets.push({ x: 150 + Math.random() * 200, y: 100 + Math.random() * 200, type: type, width: type === 'capsule' ? 35 : 25, height: type === 'capsule' ? 15 : 25, healed: false, rotation: Math.random() * Math.PI });
+        
+        // 💊 Класс таблетки с физикой
+        class KawaiiPill {
+            constructor() {
+                this.radius = 20 + Math.random() * 15;
+                this.x = Math.random() * (canvas.width - 100) + 50;
+                this.y = Math.random() * (canvas.height - 100) + 50;
+                // 🚀 БЫСТРАЯ скорость
+                this.vx = (Math.random() - 0.5) * 8;
+                this.vy = (Math.random() - 0.5) * 8;
+                this.color = this.getRandomColor();
+                this.secondaryColor = this.getSecondaryColor();
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.1;
+                this.bounceCount = 0;
+                this.hasFace = Math.random() > 0.3; // 70% таблеток с лицом
+                this.happiness = Math.random(); // Для анимации лица
+            }
+            
+            getRandomColor() {
+                const colors = ['#FFB6C1', '#FFC0CB', '#FFD4E8', '#FFA0C8', '#FFB6D9', '#E6B3FF', '#B3D9FF'];
+                return colors[Math.floor(Math.random() * colors.length)];
+            }
+            
+            getSecondaryColor() {
+                const colors = ['#FF69B4', '#FF1493', '#C71585', '#DA70D6', '#87CEEB'];
+                return colors[Math.floor(Math.random() * colors.length)];
+            }
+            
+            update() {
+                // Движение
+                this.x += this.vx;
+                this.y += this.vy;
+                this.rotation += this.rotationSpeed;
+                
+                // Отскок от стен
+                if (this.x - this.radius < 0) {
+                    this.x = this.radius;
+                    this.vx = Math.abs(this.vx);
+                    this.bounceCount++;
+                }
+                if (this.x + this.radius > canvas.width) {
+                    this.x = canvas.width - this.radius;
+                    this.vx = -Math.abs(this.vx);
+                    this.bounceCount++;
+                }
+                if (this.y - this.radius < 0) {
+                    this.y = this.radius;
+                    this.vy = Math.abs(this.vy);
+                    this.bounceCount++;
+                }
+                if (this.y + this.radius > canvas.height) {
+                    this.y = canvas.height - this.radius;
+                    this.vy = -Math.abs(this.vy);
+                    this.bounceCount++;
+                }
+            }
+            
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                
+                // Тень
+                ctx.fillStyle = 'rgba(0,0,0,0.1)';
+                ctx.beginPath();
+                ctx.ellipse(3, 3, this.radius, this.radius * 0.6, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Основная часть (капсула)
+                const gradient = ctx.createLinearGradient(-this.radius, -this.radius, this.radius, this.radius);
+                gradient.addColorStop(0, this.color);
+                gradient.addColorStop(1, this.secondaryColor);
+                ctx.fillStyle = gradient;
+                
+                // Рисуем капсулу
+                ctx.beginPath();
+                ctx.roundRect(-this.radius, -this.radius * 0.6, this.radius * 2, this.radius * 1.2, this.radius * 0.6);
+                ctx.fill();
+                
+                // Блик
+                ctx.fillStyle = 'rgba(255,255,255,0.6)';
+                ctx.beginPath();
+                ctx.ellipse(-this.radius * 0.3, -this.radius * 0.2, this.radius * 0.25, this.radius * 0.15, -0.3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Полоска посередине
+                ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(-this.radius * 0.8, 0);
+                ctx.lineTo(this.radius * 0.8, 0);
+                ctx.stroke();
+                
+                // МИЛОЕ ЛИЧИКО (Chibi style)
+                if (this.hasFace) {
+                    ctx.save();
+                    ctx.rotate(-this.rotation); // Лицо всегда смотрит вверх
+                    
+                    // Глаза (большие, милые)
+                    ctx.fillStyle = '#2C1810';
+                    const eyeOffset = Math.sin(frame * 0.05 + this.happiness * 10) * 2;
+                    
+                    // Левый глаз
+                    ctx.beginPath();
+                    ctx.ellipse(-this.radius * 0.35, -this.radius * 0.1 + eyeOffset, 5, 6, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.beginPath();
+                    ctx.arc(-this.radius * 0.35 - 2, -this.radius * 0.1 + eyeOffset - 2, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Правый глаз
+                    ctx.fillStyle = '#2C1810';
+                    ctx.beginPath();
+                    ctx.ellipse(this.radius * 0.35, -this.radius * 0.1 + eyeOffset, 5, 6, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.beginPath();
+                    ctx.arc(this.radius * 0.35 - 2, -this.radius * 0.1 + eyeOffset - 2, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Румянец
+                    ctx.fillStyle = 'rgba(255,182,193,0.6)';
+                    ctx.beginPath();
+                    ctx.ellipse(-this.radius * 0.5, this.radius * 0.1, 4, 3, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.ellipse(this.radius * 0.5, this.radius * 0.1, 4, 3, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Рот (милый)
+                    ctx.strokeStyle = '#2C1810';
+                    ctx.lineWidth = 2;
+                    ctx.lineCap = 'round';
+                    ctx.beginPath();
+                    ctx.arc(0, this.radius * 0.15, 4, 0.1 * Math.PI, 0.9 * Math.PI);
+                    ctx.stroke();
+                    
+                    ctx.restore();
+                }
+                
+                ctx.restore();
+            }
+            
+            // Проверка столкновения с другой таблеткой
+            checkCollision(other) {
+                const dx = other.x - this.x;
+                const dy = other.y - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const minDistance = this.radius + other.radius;
+                
+                if (distance < minDistance) {
+                    // 💥 СТОЛКНОВЕНИЕ!
+                    
+                    // Угол столкновения
+                    const angle = Math.atan2(dy, dx);
+                    const sin = Math.sin(angle);
+                    const cos = Math.cos(angle);
+                    
+                    // Поворот скоростей
+                    const vx1 = this.vx * cos + this.vy * sin;
+                    const vy1 = this.vy * cos - this.vx * sin;
+                    const vx2 = other.vx * cos + other.vy * sin;
+                    const vy2 = other.vy * cos - other.vx * sin;
+                    
+                    // Обмен скоростями (упругое столкновение)
+                    const finalVx1 = vx2;
+                    const finalVx2 = vx1;
+                    
+                    // Обратный поворот
+                    this.vx = finalVx1 * cos - vy1 * sin;
+                    this.vy = vy1 * cos + finalVx1 * sin;
+                    other.vx = finalVx2 * cos - vy2 * sin;
+                    other.vy = vy2 * cos + finalVx2 * sin;
+                    
+                    // Разделение таблеток (чтобы не слипались)
+                    const overlap = minDistance - distance;
+                    const separationX = (overlap * cos) / 2;
+                    const separationY = (overlap * sin) / 2;
+                    
+                    this.x -= separationX;
+                    this.y -= separationY;
+                    other.x += separationX;
+                    other.y += separationY;
+                    
+                    // Ускорение после столкновения (для динамики)
+                    this.vx *= 1.05;
+                    this.vy *= 1.05;
+                    other.vx *= 1.05;
+                    other.vy *= 1.05;
+                    
+                    // Ограничение максимальной скорости
+                    const maxSpeed = 10;
+                    const speed1 = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                    const speed2 = Math.sqrt(other.vx * other.vx + other.vy * other.vy);
+                    
+                    if (speed1 > maxSpeed) {
+                        this.vx = (this.vx / speed1) * maxSpeed;
+                        this.vy = (this.vy / speed1) * maxSpeed;
+                    }
+                    if (speed2 > maxSpeed) {
+                        other.vx = (other.vx / speed2) * maxSpeed;
+                        other.vy = (other.vy / speed2) * maxSpeed;
+                    }
+                    
+                    // Эффект столкновения
+                    createSparkles((this.x + other.x) / 2, (this.y + other.y) / 2);
+                    
+                    return true;
+                }
+                return false;
+            }
         }
+        
+        // ✨ Эффекты частиц
+        function createSparkles(x, y) {
+            for (let i = 0; i < 8; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 6,
+                    vy: (Math.random() - 0.5) * 6,
+                    life: 1,
+                    color: `hsl(${Math.random() * 60 + 300}, 100%, 75%)`,
+                    size: Math.random() * 6 + 4
+                });
+            }
+        }
+        
+        function createHealEffect(x, y) {
+            for (let i = 0; i < 15; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
+                    life: 1,
+                    color: '#FF69B4',
+                    size: Math.random() * 8 + 5,
+                    isHeart: true
+                });
+            }
+        }
+        
+        // Создание таблеток
+        for (let i = 0; i < 8; i++) {
+            pills.push(new KawaiiPill());
+        }
+        
+        // Клик по таблетке
         canvas.addEventListener('click', (e) => {
-            const rect = canvas.getBoundingClientRect(), x = e.clientX - rect.left, y = e.clientY - rect.top;
-            healTargets.forEach(target => {
-                if (!target.healed) {
-                    const dist = Math.sqrt((x - target.x) ** 2 + (y - target.y) ** 2);
-                    if (dist < target.width + 10) {
-                        target.healed = true; score++;
-                        ctx.fillStyle = 'rgba(0, 255, 0, 0.3)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                        if (score >= 6) { catState.health = Math.min(100, catState.health + 30); saveState(); window.location.href = 'index.html'; }
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            pills.forEach((pill, index) => {
+                const dist = Math.sqrt((x - pill.x) ** 2 + (y - pill.y) ** 2);
+                if (dist < pill.radius + 10) {
+                    // 💊 ПОЙМАЛИ ТАБЛЕТКУ!
+                    createHealEffect(pill.x, pill.y);
+                    pills.splice(index, 1);
+                    score++;
+                    
+                    // Восстановление здоровья
+                    catState.health = Math.min(100, catState.health + 5);
+                    saveState();
+                    
+                    // Создаем новую таблетку
+                    setTimeout(() => {
+                        pills.push(new KawaiiPill());
+                    }, 500);
+                    
+                    // Победа
+                    if (score >= 15) {
+                        catState.happiness = Math.min(100, catState.happiness + 20);
+                        saveState();
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 1000);
                     }
                 }
             });
         });
-        function drawCat(x, y) {
-            ctx.save(); ctx.translate(x, y);
-            const tailWag = Math.sin(frame * 0.2) * 8; ctx.fillStyle = '#A0A0A0'; ctx.fillRect(-20, 30 + tailWag, 25, 8); ctx.fillRect(-30, 25 + tailWag, 15, 8);
-            const legOffset = Math.sin(frame * 0.3) * 8; ctx.fillStyle = '#A0A0A0'; ctx.fillRect(5 + legOffset, 48, 8, 12); ctx.fillRect(20 - legOffset, 48, 8, 12);
-            ctx.fillStyle = '#C0C0C0'; ctx.fillRect(0, 20, 50, 30); ctx.fillStyle = '#A0A0A0'; ctx.fillRect(0, 35, 50, 15);
-            ctx.fillStyle = '#808080'; ctx.fillRect(10, 22, 6, 24); ctx.fillRect(25, 22, 6, 24); ctx.fillRect(40, 22, 6, 24);
-            ctx.fillStyle = '#A0A0A0'; ctx.fillRect(42 + legOffset, 48, 8, 12); ctx.fillRect(55 - legOffset, 48, 8, 12);
-            ctx.fillStyle = '#C0C0C0'; ctx.fillRect(40, 5, 32, 26); ctx.fillStyle = '#A0A0A0'; ctx.fillRect(42, 0, 10, 10); ctx.fillRect(60, 0, 10, 10);
-            ctx.fillStyle = '#E0E0E0'; ctx.fillRect(44, 2, 6, 6); ctx.fillRect(62, 2, 6, 6);
-            ctx.fillStyle = '#E0E0E0'; ctx.fillRect(46, 10, 10, 10); ctx.fillRect(62, 10, 10, 10);
-            ctx.fillStyle = '#FFD000'; ctx.fillRect(48, 12, 6, 6); ctx.fillRect(64, 12, 6, 6);
-            ctx.fillStyle = '#000'; ctx.fillRect(50, 13, 3, 3); ctx.fillRect(66, 13, 3, 3);
-            ctx.fillStyle = '#FF80A0'; ctx.fillRect(68, 20, 6, 5);
-            ctx.fillStyle = '#E0E0E0'; ctx.fillRect(35, 15, 12, 2); ctx.fillRect(35, 19, 12, 2); ctx.fillRect(35, 23, 12, 2); ctx.fillRect(74, 15, 12, 2); ctx.fillRect(74, 19, 12, 2); ctx.fillRect(74, 23, 12, 2);
-            ctx.restore();
-        }
-        function drawPill(target) {
-            if (target.healed) return; ctx.save(); ctx.translate(target.x, target.y); ctx.rotate(target.rotation);
-            if (target.type === 'capsule') {
-                ctx.fillStyle = '#FF6B6B'; ctx.fillRect(-target.width/2, -target.height/2, target.width/2, target.height);
-                ctx.fillStyle = '#4ECDC4'; ctx.fillRect(0, -target.height/2, target.width/2, target.height);
-                ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2; ctx.strokeRect(-target.width/2, -target.height/2, target.width, target.height);
-                ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fillRect(-target.width/2 + 3, -target.height/2 + 2, 8, 4);
-            } else {
-                ctx.fillStyle = '#95E1D3'; ctx.beginPath(); ctx.arc(0, 0, target.height/2, 0, Math.PI * 2); ctx.fill();
-                ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2; ctx.stroke();
-                ctx.strokeStyle = '#FF6B6B'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-8, -8); ctx.lineTo(8, 8); ctx.moveTo(8, -8); ctx.lineTo(-8, 8); ctx.stroke();
-                ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.beginPath(); ctx.arc(-5, -5, 4, 0, Math.PI * 2); ctx.fill();
-            }
-            ctx.restore();
-        }
+        
+        // Анимация
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#E8F4F8'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.strokeStyle = '#B8D8E0'; ctx.lineWidth = 1;
-            for (let i = 0; i < canvas.width; i += 40) for (let j = 0; j < canvas.height; j += 40) ctx.strokeRect(i, j, 40, 40);
-            healTargets.forEach(target => { drawPill(target); });
-            drawCat(100, 150);
-            ctx.fillStyle = '#FFFF00'; ctx.font = '10px "Press Start 2P"'; ctx.fillText('ВЫЛЕЧЕНО: ' + score + '/6', 10, 30);
-            ctx.fillStyle = '#333'; ctx.fillRect(10, 45, 150, 10);
-            ctx.fillStyle = '#00FF00'; ctx.fillRect(10, 45, (score / 6) * 150, 10);
-            ctx.strokeStyle = '#FFF'; ctx.lineWidth = 2; ctx.strokeRect(10, 45, 150, 10);
-            frame++; requestAnimationFrame(animate);
+            
+            // Милый фон с сердечками
+            ctx.fillStyle = 'rgba(255,182,193,0.1)';
+            for (let i = 0; i < 5; i++) {
+                const hx = (frame * 0.5 + i * 150) % (canvas.width + 100) - 50;
+                const hy = 100 + Math.sin(frame * 0.02 + i) * 50;
+                ctx.beginPath();
+                ctx.arc(hx, hy, 30, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Обновление и отрисовка таблеток
+            pills.forEach((pill, i) => {
+                pill.update();
+                
+                // Проверка столкновений с другими таблетками
+                pills.forEach((other, j) => {
+                    if (i !== j) {
+                        pill.checkCollision(other);
+                    }
+                });
+                
+                pill.draw();
+            });
+            
+            // Обновление частиц
+            particles = particles.filter(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.2; // гравитация
+                p.life -= 0.02;
+                
+                if (p.life > 0) {
+                    ctx.save();
+                    ctx.globalAlpha = p.life;
+                    ctx.fillStyle = p.color;
+                    
+                    if (p.isHeart) {
+                        // Рисуем сердечко
+                        ctx.beginPath();
+                        const size = p.size * p.life;
+                        ctx.moveTo(p.x, p.y + size / 2);
+                        ctx.bezierCurveTo(p.x - size, p.y - size / 2, p.x - size, p.y + size / 2, p.x, p.y + size);
+                        ctx.bezierCurveTo(p.x + size, p.y + size / 2, p.x + size, p.y - size / 2, p.x, p.y + size / 2);
+                        ctx.fill();
+                    } else {
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    
+                    ctx.restore();
+                    return true;
+                }
+                return false;
+            });
+            
+            // Счёт
+            ctx.fillStyle = '#FF1493';
+            ctx.font = 'bold 12px "Press Start 2P"';
+            ctx.fillText('💊 ПОЙМАНО: ' + score + '/15', 10, 30);
+            
+            // Здоровье
+            ctx.fillStyle = '#FF69B4';
+            ctx.fillText('💚 ЗДОРОВЬЕ: ' + catState.health, 10, 50);
+            
+            frame++;
+            requestAnimationFrame(animate);
         }
+        
         animate();
     </script>
 </body>
