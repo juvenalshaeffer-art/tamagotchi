@@ -177,7 +177,7 @@ function initMainScreen() {
         ctx.fillRect(sofa.x + sofa.width - 5, sofa.y - 10, 15, sofa.height + 10);
     }
     
-    // 🐱 ИСПРАВЛЕННЫЙ СПЯЩИЙ КОТИК (SEGA 16-бит стиль)
+    // 🐱 СПЯЩИЙ КОТИК - ПИКСЕЛЬНЫЙ (Sega 16-bit pixel art)
     function drawCat(x, y, direction, action) {
         ctx.save();
         ctx.translate(x, y);
@@ -188,206 +188,108 @@ function initMainScreen() {
         }
         
         if (action === 'sleeping') {
-            // 😴 СПЯЩИЙ КОТИК - Sega 16-bit стиль
+            // 😴 СПЯЩИЙ КОТИК - ПИКСЕЛЬНЫЙ СТИЛЬ (квадратный)
             ctx.save();
             
-            // Тело (свёрнулся клубком на боку)
+            // Тело (свёрнулся - прямоугольники)
             ctx.fillStyle = COLORS.cat2;
-            ctx.beginPath();
-            ctx.ellipse(35, 45, 40, 25, 0, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.fillRect(10, 35, 55, 25);  // Основное тело
             
-            // Более светлое брюшко
+            // Брюшко (светлее)
             ctx.fillStyle = COLORS.catLight;
-            ctx.beginPath();
-            ctx.ellipse(35, 50, 30, 15, 0, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.fillRect(15, 45, 45, 10);
             
-            // Полоски на спине (изогнутые)
+            // Полоски на спине (квадратные)
             ctx.fillStyle = COLORS.cat3;
-            ctx.beginPath();
-            ctx.arc(20, 35, 8, 0.2 * Math.PI, 0.8 * Math.PI);
-            ctx.lineWidth = 5;
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.arc(35, 32, 8, 0.2 * Math.PI, 0.8 * Math.PI);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.arc(50, 35, 8, 0.2 * Math.PI, 0.8 * Math.PI);
-            ctx.stroke();
+            ctx.fillRect(18, 35, 6, 20);
+            ctx.fillRect(32, 35, 6, 20);
+            ctx.fillRect(46, 35, 6, 20);
+            ctx.fillRect(58, 35, 5, 20);
             
-            // Хвост (обёрнут вокруг тела)
+            // Хвост (обёрнут вокруг - пиксельный)
             ctx.fillStyle = COLORS.cat2;
-            ctx.beginPath();
-            ctx.arc(15, 50, 15, 0.3 * Math.PI, 1.5 * Math.PI);
-            ctx.lineWidth = 10;
-            ctx.strokeStyle = COLORS.cat2;
-            ctx.stroke();
-            
+            ctx.fillRect(5, 40, 10, 8);
+            ctx.fillRect(3, 48, 8, 6);
             // Кончик хвоста (белый)
             ctx.fillStyle = COLORS.catLight;
-            ctx.beginPath();
-            ctx.arc(12, 55, 5, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.fillRect(3, 52, 6, 4);
             
-            // Задние лапы (поджаты)
+            // Задние лапы (поджаты - квадраты)
             ctx.fillStyle = COLORS.cat2;
-            ctx.beginPath();
-            ctx.ellipse(20, 60, 8, 6, 0.3, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.ellipse(28, 62, 7, 5, 0.2, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.fillRect(15, 58, 8, 8);
+            ctx.fillRect(25, 60, 7, 7);
             
-            // Передние лапы (сложены под головой)
-            ctx.beginPath();
-            ctx.ellipse(45, 58, 6, 5, -0.2, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.ellipse(52, 60, 5, 4, -0.1, 0, Math.PI * 2);
-            ctx.fill();
+            // Передние лапы (сложены - квадраты)
+            ctx.fillRect(45, 58, 7, 7);
+            ctx.fillRect(54, 60, 6, 6);
             
-            // Голова (лежит на боку)
+            // Голова (квадратная, лежит на боку)
             ctx.fillStyle = COLORS.cat1;
-            ctx.beginPath();
-            ctx.arc(55, 40, 20, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.fillRect(55, 30, 28, 24);
             
             // Мордочка (светлее)
             ctx.fillStyle = COLORS.catLight;
-            ctx.beginPath();
-            ctx.ellipse(65, 45, 12, 10, 0, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.fillRect(68, 38, 12, 12);
             
-            // Уши (расслаблены)
+            // Уши (треугольные пиксельные)
             ctx.fillStyle = COLORS.cat2;
-            ctx.beginPath();
-            ctx.moveTo(45, 30);
-            ctx.lineTo(48, 18);
-            ctx.lineTo(52, 28);
-            ctx.closePath();
-            ctx.fill();
-            ctx.beginPath();
-            ctx.moveTo(58, 28);
-            ctx.lineTo(62, 18);
-            ctx.lineTo(65, 30);
-            ctx.closePath();
-            ctx.fill();
-            
+            ctx.fillRect(58, 24, 8, 8);
+            ctx.fillRect(72, 24, 8, 8);
             // Внутренняя часть ушей (розовая)
             ctx.fillStyle = COLORS.catNose;
-            ctx.beginPath();
-            ctx.moveTo(47, 28);
-            ctx.lineTo(49, 22);
-            ctx.lineTo(51, 28);
-            ctx.closePath();
-            ctx.fill();
-            ctx.beginPath();
-            ctx.moveTo(59, 28);
-            ctx.lineTo(61, 22);
-            ctx.lineTo(63, 28);
-            ctx.closePath();
-            ctx.fill();
+            ctx.fillRect(60, 26, 4, 4);
+            ctx.fillRect(74, 26, 4, 4);
             
-            // ✅ ЗАКРЫТЫЕ ГЛАЗА (изогнутые линии - Sega стиль)
-            ctx.strokeStyle = '#000000';
-            ctx.lineWidth = 2.5;
-            ctx.lineCap = 'round';
+            // ✅ ЗАКРЫТЫЕ ГЛАЗА (пиксельные линии)
+            ctx.fillStyle = '#000000';
+            // Левый глаз (закрыт - линия из пикселей)
+            ctx.fillRect(60, 36, 8, 2);
+            // Правый глаз (закрыт - линия из пикселей)
+            ctx.fillRect(74, 36, 8, 2);
             
-            // Левый глаз (закрыт)
-            ctx.beginPath();
-            ctx.moveTo(50, 38);
-            ctx.quadraticCurveTo(53, 41, 56, 38);
-            ctx.stroke();
-            
-            // Правый глаз (закрыт)
-            ctx.beginPath();
-            ctx.moveTo(60, 38);
-            ctx.quadraticCurveTo(63, 41, 66, 38);
-            ctx.stroke();
-            
-            // Брови (расслаблены)
-            ctx.strokeStyle = COLORS.cat3;
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.moveTo(49, 35);
-            ctx.quadraticCurveTo(53, 36, 57, 35);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(59, 35);
-            ctx.quadraticCurveTo(63, 36, 67, 35);
-            ctx.stroke();
-            
-            // Нос (треугольный)
+            // Нос (квадратный)
             ctx.fillStyle = COLORS.catNose;
-            ctx.beginPath();
-            ctx.moveTo(62, 42);
-            ctx.lineTo(60, 46);
-            ctx.lineTo(64, 46);
-            ctx.closePath();
-            ctx.fill();
+            ctx.fillRect(78, 42, 5, 4);
             
-            // Рот (спокойный, слегка улыбается)
-            ctx.strokeStyle = '#000000';
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.moveTo(62, 46);
-            ctx.quadraticCurveTo(62, 48, 60, 47);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(62, 46);
-            ctx.quadraticCurveTo(62, 48, 64, 47);
-            ctx.stroke();
+            // Рот (спокойный - пиксельная линия)
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(76, 47, 6, 2);
             
-            // Усы (расслаблены)
-            ctx.strokeStyle = COLORS.catLight;
-            ctx.lineWidth = 1;
-            for (let i = 0; i < 3; i++) {
-                ctx.beginPath();
-                ctx.moveTo(68, 44 + i * 4);
-                ctx.quadraticCurveTo(75, 44 + i * 4, 80, 42 + i * 4);
-                ctx.stroke();
-            }
+            // Усы (пиксельные линии)
+            ctx.fillStyle = COLORS.catLight;
+            ctx.fillRect(82, 40, 10, 2);
+            ctx.fillRect(82, 44, 10, 2);
+            ctx.fillRect(82, 48, 10, 2);
             
-            // 💤 Zzz анимация (Sega стиль - пиксельные буквы)
+            // 💤 Zzz анимация (пиксельный шрифт)
             const zOffset = Math.sin(frame * 0.06) * 4;
             ctx.fillStyle = '#87CEEB';
-            ctx.font = 'bold 16px "Press Start 2P"';
+            ctx.font = 'bold 14px "Press Start 2P"';
             
             // Большая Z
-            ctx.save();
-            ctx.translate(25 + zOffset, 20 - zOffset);
-            ctx.scale(1.2, 1.2);
-            ctx.fillText('Z', 0, 0);
-            ctx.restore();
-            
+            ctx.fillText('Z', 25 + zOffset, 20 - zOffset);
             // Средняя z
-            ctx.save();
-            ctx.translate(15 + zOffset * 0.8, 12 - zOffset * 0.8);
-            ctx.scale(0.9, 0.9);
-            ctx.fillText('z', 0, 0);
-            ctx.restore();
-            
+            ctx.font = 'bold 10px "Press Start 2P"';
+            ctx.fillText('z', 15 + zOffset * 0.8, 12 - zOffset * 0.8);
             // Маленькая z
-            ctx.save();
-            ctx.translate(8 + zOffset * 0.6, 6 - zOffset * 0.6);
-            ctx.scale(0.7, 0.7);
-            ctx.fillText('z', 0, 0);
-            ctx.restore();
+            ctx.font = 'bold 7px "Press Start 2P"';
+            ctx.fillText('z', 8 + zOffset * 0.6, 6 - zOffset * 0.6);
             
-            // ✨ Звёздочки сна (мерцают)
+            // ✨ Пиксельные звёздочки (мерцают)
             const starAlpha = (Math.sin(frame * 0.1) + 1) / 2;
             ctx.fillStyle = `rgba(255, 215, 0, ${starAlpha * 0.8})`;
             
-            // Звезда 1
-            ctx.beginPath();
-            drawStar(ctx, 30 + Math.sin(frame * 0.05) * 3, 15 + Math.cos(frame * 0.05) * 3, 5, 2, 8);
-            ctx.fill();
+            // Звезда 1 (пиксельная)
+            const s1x = 30 + Math.sin(frame * 0.05) * 3;
+            const s1y = 15 + Math.cos(frame * 0.05) * 3;
+            ctx.fillRect(s1x - 3, s1y - 1, 6, 2);
+            ctx.fillRect(s1x - 1, s1y - 3, 2, 6);
             
             // Звезда 2
-            ctx.beginPath();
-            drawStar(ctx, 20 + Math.sin(frame * 0.07) * 2, 25 + Math.cos(frame * 0.07) * 2, 4, 1.5, 6);
-            ctx.fill();
+            const s2x = 20 + Math.sin(frame * 0.07) * 2;
+            const s2y = 25 + Math.cos(frame * 0.07) * 2;
+            ctx.fillRect(s2x - 2, s2y - 1, 4, 2);
+            ctx.fillRect(s2x - 1, s2y - 2, 2, 4);
             
             ctx.restore();
             
@@ -431,30 +333,6 @@ function initMainScreen() {
             ctx.fillRect(74, 15, 12, 2); ctx.fillRect(74, 19, 12, 2); ctx.fillRect(74, 23, 12, 2);
         }
         ctx.restore();
-    }
-    
-    // Вспомогательная функция для рисования звёзд
-    function drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius) {
-        let rot = Math.PI / 2 * 3;
-        let x = cx;
-        let y = cy;
-        let step = Math.PI / spikes;
-
-        ctx.beginPath();
-        ctx.moveTo(cx, cy - outerRadius);
-        for (let i = 0; i < spikes; i++) {
-            x = cx + Math.cos(rot) * outerRadius;
-            y = cy + Math.sin(rot) * outerRadius;
-            ctx.lineTo(x, y);
-            rot += step;
-
-            x = cx + Math.cos(rot) * innerRadius;
-            y = cy + Math.sin(rot) * innerRadius;
-            ctx.lineTo(x, y);
-            rot += step;
-        }
-        ctx.lineTo(cx, cy - outerRadius);
-        ctx.closePath();
     }
     
     function animate() {
